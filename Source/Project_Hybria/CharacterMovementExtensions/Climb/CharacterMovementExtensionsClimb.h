@@ -11,21 +11,31 @@ private:
     class UCapsuleComponent *CapsuleComponent;
     class AProject_HybriaCharacter *ActorComponent;
     FHitResult EdgeHitResult;
+    int32 NextUUID = 0;
+
+    int GetNextUUID();
 
 public:
-    class UAnimMontage *MyMontage;
-
     UCharacterMovementExtensionsClimb();
-
-    void Tick();
 
     UFUNCTION(BlueprintCallable)
     void JumbToFloor();
 
+    UFUNCTION(BlueprintCallable)
+    void FreeMovement();
+
 protected:
 
 public:
-    bool Tick(class AProject_HybriaCharacter *Character, class UWorld *Word);
+    void Tick(class AProject_HybriaCharacter *Character);
 
     void FinishClimbing();
+
+    float HangAnimRate;
+
+    float ClimbAnimRate;
+
+    int HangHandOffset;
+
+    int HangZOffset;
 };

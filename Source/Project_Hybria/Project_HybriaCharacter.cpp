@@ -27,7 +27,8 @@ void AProject_HybriaCharacter::BeginPlay()
 	CharacterMovementExtensionsHandler = NewObject<UCharacterMovementExtensions>();
 
 	CharacterMovementExtensionsHandler->CurrMovement = ECharacterMovement::Walk;
-	CharacterMovementExtensionsHandler->ClimbEvent(ClimbMontage);
+	CharacterMovementExtensionsHandler->ClimbEvent(ClimbMontage, HangAnimRate, ClimbAnimRate, HangHandOffset, HangZOffset);
+	CharacterMovementExtensionsHandler->EdgeJumpEvent();
 	}
 }
 
@@ -81,8 +82,7 @@ void AProject_HybriaCharacter::Tick(float DeltaTime)
 	if(CharacterMovementExtensionsHandler == nullptr) return;
 
 	//UE_LOG(LogTemp, Display, TEXT("%s"),CharacterMovementExtensionsHandler->bLockMoviment);
-	CharacterMovementExtensionsHandler->Tick(this,
-											 GetWorld());
+	CharacterMovementExtensionsHandler->Tick(this);
 }
 
 void AProject_HybriaCharacter::PlayMontage(class UAnimMontage* Montage, float Rate)

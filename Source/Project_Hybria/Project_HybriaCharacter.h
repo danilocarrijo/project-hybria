@@ -80,6 +80,18 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Climb Movement")
         class UAnimMontage* ClimbMontage;
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Climb Movement")
+        float HangAnimRate = 0.5f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Climb Movement")
+        float ClimbAnimRate = 0.5f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Climb Movement")
+        int HangHandOffset = 2;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Climb Movement")
+        int HangZOffset = 200;
+
 	void SetCanMoveAndState(bool bCanMove, ECharacterMovement Movement);
 
 private:

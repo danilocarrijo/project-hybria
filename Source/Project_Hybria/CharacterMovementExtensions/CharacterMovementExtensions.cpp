@@ -1,35 +1,44 @@
 #include "CharacterMovementExtensions.h"
 #include "Climb/CharacterMovementExtensionsClimb.h"
+#include "EdgeJump/CharacterMovementExtensionsEdgeJump.h"
 #include "../Project_HybriaCharacter.h"
 
 UCharacterMovementExtensions::UCharacterMovementExtensions()
 {
 
-    ClimbExtensions = NewObject<UCharacterMovementExtensionsClimb>();
-    CurrMovement = ECharacterMovement::Walk;
 }
 
-void UCharacterMovementExtensions::Tick(AProject_HybriaCharacter *Character,
-                                        UWorld *Word)
+void UCharacterMovementExtensions::Tick(AProject_HybriaCharacter *Character)
 {
 
-    if (Character == nullptr || Word == nullptr)
+    if (Character == nullptr)
         return;
 
     switch (CurrMovement)
     {
         case ECharacterMovement::Walk:
-            ClimbExtensions->Tick(Character,
-                                Word);
+            ClimbExtensions->Tick(Character);
+            EdgeJumpExtensions->Tick(Character);
             break;
         default:
             break;
     }
 }
 
-void UCharacterMovementExtensions::ClimbEvent(UAnimMontage *ClimbMontage)
+void UCharacterMovementExtensions::ClimbEvent(UAnimMontage *ClimbMontage, float HangAnimRate, float ClimbAnimRate, int HangHandOffset, int HangZOffset)
 {
-    ClimbExtensions->MyMontage = ClimbMontage;
+    ClimbExtensions = NewObject<UCharacterMovementExtensionsClimb>();
+    CurrMovement = ECharacterMovement::Walk;
+    
+    ClimbExtensions->HangAnimRate = HangAnimRate;
+    ClimbExtensions->ClimbAnimRate = ClimbAnimRate;
+    ClimbExtensions->HangHandOffset = HangHandOffset;
+    ClimbExtensions->HangZOffset = HangZOffset;
+}
+
+void UCharacterMovementExtensions::EdgeJumpEvent()
+{
+    EdgeJumpExtensions = NewObject<UCharacterMovementExtensionsEdgeJump>();
 }
 
 void UCharacterMovementExtensions::FinishClimbing()

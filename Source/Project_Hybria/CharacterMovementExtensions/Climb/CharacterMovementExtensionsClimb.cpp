@@ -18,15 +18,25 @@ UCharacterMovementExtensionsClimb::UCharacterMovementExtensionsClimb()
 {
 }
 
-bool UCharacterMovementExtensionsClimb::Tick(AProject_HybriaCharacter *Character, UWorld *Word)
+void UCharacterMovementExtensionsClimb::Tick(AProject_HybriaCharacter *Character)
 {
 
-    if (Character == nullptr || MyMontage == nullptr)
-        return false;
+    if (Character == nullptr || Character->ClimbMontage == nullptr)
+        return;
 
     UCapsuleComponent *Capsule = Character->GetCapsuleComponent();
+
+    if (Capsule == nullptr)
+        return;
+
     UCharacterMovementComponent *MovementComponent = Cast<UCharacterMovementComponent>(Character->GetMovementComponent());
+
+    if (MovementComponent == nullptr)
+        return;
+
     USkeletalMeshComponent *SkeletalMeshComponent = Character->GetMesh();
+    if (SkeletalMeshComponent == nullptr)
+        return;
 
     float HalfHeight = Capsule->GetScaledCapsuleHalfHeight();
 
@@ -39,7 +49,7 @@ bool UCharacterMovementExtensionsClimb::Tick(AProject_HybriaCharacter *Character
     FVector End = Start + FVector(0, 0, 10);
 
 
-    bool bHit = SphereTraceByChannel::Trace(Character, Word, Start, End, Radius, TraceChannel, EdgeHitResult, bDebug);
+    bool bHit = SphereTraceByChannel::Trace(Character, Character->GetWorld(), Start, End, Radius, TraceChannel, EdgeHitResult, bDebug);
     
     if (bHit)
     {
@@ -47,7 +57,7 @@ bool UCharacterMovementExtensionsClimb::Tick(AProject_HybriaCharacter *Character
         ActorComponent = Character;
 
         MovementComponent->StopMovementImmediately();
-        ActorComponent->SetCanMoveAndState(true, ECharacterMovement::Clibing);
+        Character->SetCanMoveAndState(true, ECharacterMovement::Clibing);
         MovementComponent->SetMovementMode(EMovementMode::MOVE_Flying);
 
         Start = Character->GetActorLocation();
@@ -55,7 +65,7 @@ bool UCharacterMovementExtensionsClimb::Tick(AProject_HybriaCharacter *Character
 
 
         FHitResult HitWallResult;
-        bool bHitWall = SphereTraceByChannel::Trace(Character, Word, Start, End, Radius, ECollisionChannel::ECC_WorldStatic, HitWallResult, bDebug);
+        bool bHitWall = SphereTraceByChannel::Trace(Character, Character->GetWorld(), Start, End, Radius, ECollisionChannel::ECC_WorldStatic, HitWallResult, bDebug);
 
         if ( bHitWall )
         {
@@ -66,40 +76,98 @@ bool UCharacterMovementExtensionsClimb::Tick(AProject_HybriaCharacter *Character
             Character->SetActorRotation(NewRotation);
 
 
-            if (MyMontage != nullptr)
-            { 
+            auto Mesh = Character->GetMesh();
 
-                ActorComponent->GetMesh()->GetAnimInstance()->Montage_Play(MyMontage, 1.0f);
+            if (Mesh == nullptr)
+                return;
 
-                return true;
-            }
+            auto AnimInstance = Mesh->GetAnimInstance();
+
+            if (AnimInstance == nullptr)
+                return;
+
+            AnimInstance->Montage_Play(Character->ClimbMontage, 1.0f);
+
+            return;
         }
     }
-    return false;
+    return;
 }
 
 void UCharacterMovementExtensionsClimb::FinishClimbing()
-{
-    ActorComponent->GetMesh()->GetAnimInstance()->Montage_Pause(MyMontage);
+{         
+    if (CapsuleComponent == nullptr)
+        return;
+
+    if (ActorComponent == nullptr)
+        return;
+
+    auto Mesh = ActorComponent->GetMesh();
+                
+    if (Mesh == nullptr)
+        return;
+
+    auto AnimInstance = Mesh->GetAnimInstance();
+
+    if (AnimInstance == nullptr)
+        return;
+
+    AnimInstance->Montage_Pause(ActorComponent->ClimbMontage);
     FLatentActionInfo Looll;
     Looll.CallbackTarget = this;
     Looll.ExecutionFunction = "JumbToFloor";
     Looll.Linkage = 0;
-    UKismetSystemLibrary::MoveComponentTo(CapsuleComponent, EdgeHitResult.Location, ActorComponent->GetActorRotation(), false, false, 0.5f, false, EMoveComponentAction::Move, Looll);
+    Looll.UUID = GetNextUUID();
+    auto HangLocation = FVector(ActorComponent->GetActorLocation().X, ActorComponent->GetActorLocation().Y, EdgeHitResult.Location.Z + HangZOffset);
+    UE_LOG(LogTemp, Display, TEXT("%d"), HangZOffset);
+    UE_LOG(LogTemp, Display, TEXT("%d"), HangAnimRate);
+    UKismetSystemLibrary::MoveComponentTo(CapsuleComponent, HangLocation, ActorComponent->GetActorRotation(), false, false, HangAnimRate, false, EMoveComponentAction::Move, Looll);
 }
 
 void UCharacterMovementExtensionsClimb::JumbToFloor()
 {
-    ActorComponent->GetMesh()->GetAnimInstance()->Montage_Resume(MyMontage);
+    if (CapsuleComponent == nullptr)
+        return;
+
+    if (ActorComponent == nullptr)
+        return;
+
+    auto Mesh = ActorComponent->GetMesh();
+                
+    if (Mesh == nullptr)
+        return;
+
+    auto AnimInstance = Mesh->GetAnimInstance();
+
+    if (AnimInstance == nullptr)
+        return;
+
+    AnimInstance->Montage_Resume(ActorComponent->ClimbMontage);
 
     float HalfHeight = CapsuleComponent->GetScaledCapsuleHalfHeight();
-    UCharacterMovementComponent *MovementComponent = Cast<UCharacterMovementComponent>(ActorComponent->GetMovementComponent());
 
-    auto ForwardVector = CapsuleComponent->GetForwardVector() * 50;
-    auto UpVector = CapsuleComponent->GetUpVector() * HalfHeight * 2;
+    auto HangHandOffsetCorrection = HangHandOffset < 0 ? HangHandOffset * -1 : HangHandOffset;
+    auto ForwardVector = CapsuleComponent->GetForwardVector() * 10 * HangHandOffsetCorrection;
+    auto UpVector = CapsuleComponent->GetUpVector() * HalfHeight * 3;
     FLatentActionInfo Looll;
     Looll.CallbackTarget = this;
-    UKismetSystemLibrary::MoveComponentTo(CapsuleComponent, ForwardVector + UpVector + ActorComponent->GetActorLocation(), ActorComponent->GetActorRotation(), false, false, 0.5f, false, EMoveComponentAction::Move, Looll);
+    Looll.ExecutionFunction = "FreeMovement";
+    Looll.Linkage = 0;
+    Looll.UUID = GetNextUUID();
+    UKismetSystemLibrary::MoveComponentTo(CapsuleComponent, ForwardVector + UpVector + ActorComponent->GetActorLocation(), ActorComponent->GetActorRotation(), false, false, ClimbAnimRate, false, EMoveComponentAction::Move, Looll);
+
+}
+
+void UCharacterMovementExtensionsClimb::FreeMovement()
+{
+    if (ActorComponent == nullptr)
+        return;   
     ActorComponent->SetCanMoveAndState(false, ECharacterMovement::Walk);
+    UCharacterMovementComponent *MovementComponent = Cast<UCharacterMovementComponent>(ActorComponent->GetMovementComponent());
     MovementComponent->SetMovementMode(EMovementMode::MOVE_Walking);
+}
+
+int UCharacterMovementExtensionsClimb::GetNextUUID()
+{
+    return NextUUID++;
 }
