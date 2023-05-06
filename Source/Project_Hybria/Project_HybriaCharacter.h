@@ -31,7 +31,19 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
     UFUNCTION(BlueprintCallable)
+    ECharacterMovement GetCurrMovement();
+
+    UFUNCTION(BlueprintCallable)
     void FinishClimbing();
+
+    UFUNCTION(BlueprintCallable)
+    void OnStairCollision(class AActor* OtherActor);
+
+    UFUNCTION(BlueprintCallable)
+    void OnStairEndCollision(class AActor* OtherActor);
+
+    UFUNCTION(BlueprintCallable)
+    float GetClimbingLadderDirection();
 
 protected:
 
@@ -92,6 +104,18 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Climb Movement")
         int HangZOffset = 200;
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ladder Climb Movement")
+        int LadderClimbSpeed = 200;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ladder Climb Movement")
+        int HandOffSet = 20;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ladder Climb Movement")
+        float ZCorrection = 20;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ladder Climb Movement")
+        float BottomDistanceToDrop = 20;
+
 	void SetCanMoveAndState(bool bCanMove, ECharacterMovement Movement);
 
 private:
@@ -110,6 +134,12 @@ private:
 	void ClimbEvent();
 
 	bool bIsGrounded = false;
+
+	void ClimbLadderUp();
+
+	void ClimbLadderDown();
+
+	void StopClimbLadder();
 
 };
 

@@ -12,6 +12,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "GameFramework/Character.h"
 #include "CharacterMovementExtensions/CharacterMovementExtensions.h"
+#include "Ladder.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AProject_HybriaCharacter
@@ -21,14 +22,13 @@ void AProject_HybriaCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (CharacterMovementExtensionsHandler == nullptr) {
+	if (!IsValid(CharacterMovementExtensionsHandler)) {
 		
 
 	CharacterMovementExtensionsHandler = NewObject<UCharacterMovementExtensions>();
 
 	CharacterMovementExtensionsHandler->CurrMovement = ECharacterMovement::Walk;
-	CharacterMovementExtensionsHandler->ClimbEvent(ClimbMontage, HangAnimRate, ClimbAnimRate, HangHandOffset, HangZOffset);
-	CharacterMovementExtensionsHandler->EdgeJumpEvent();
+	CharacterMovementExtensionsHandler->Init(this);
 	}
 }
 
@@ -87,7 +87,7 @@ void AProject_HybriaCharacter::Tick(float DeltaTime)
 
 void AProject_HybriaCharacter::PlayMontage(class UAnimMontage* Montage, float Rate)
 {
-    UE_LOG(LogTemp, Display, TEXT("%s"), *Montage->GetName());
+    //UE_LOG(LogTemp, Display, TEXT("%s"), *Montage->GetName());
 	PlayAnimMontage(Montage, 1.0f);
 }
 
@@ -100,6 +100,12 @@ void AProject_HybriaCharacter::SetupPlayerInputComponent(class UInputComponent *
 	check(PlayerInputComponent);
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+
+	PlayerInputComponent->BindAction("ClimbLadderUp", IE_Pressed, this, &AProject_HybriaCharacter::ClimbLadderUp);
+    PlayerInputComponent->BindAction("ClimbLadderUp", IE_Released, this, &AProject_HybriaCharacter::StopClimbLadder);
+
+	PlayerInputComponent->BindAction("ClimbLadderDown", IE_Pressed, this, &AProject_HybriaCharacter::ClimbLadderDown);
+    PlayerInputComponent->BindAction("ClimbLadderDown", IE_Released, this, &AProject_HybriaCharacter::StopClimbLadder);
 
 	PlayerInputComponent->BindAxis("Move Forward / Backward", this, &AProject_HybriaCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("Move Right / Left", this, &AProject_HybriaCharacter::MoveRight);
@@ -117,9 +123,64 @@ void AProject_HybriaCharacter::SetupPlayerInputComponent(class UInputComponent *
 	PlayerInputComponent->BindTouch(IE_Released, this, &AProject_HybriaCharacter::TouchStopped);
 }
 
+void AProject_HybriaCharacter::ClimbLadderUp()
+{
+	if (!IsValid(CharacterMovementExtensionsHandler)) return;
+
+	if(CharacterMovementExtensionsHandler->CurrMovement == ECharacterMovement::LadderClibing)
+	{
+		CharacterMovementExtensionsHandler->MoveForward(1, this);
+	}
+}
+
+void AProject_HybriaCharacter::ClimbLadderDown()
+{
+	if (!IsValid(CharacterMovementExtensionsHandler)) return;
+
+	if(CharacterMovementExtensionsHandler->CurrMovement == ECharacterMovement::LadderClibing)
+	{
+		CharacterMovementExtensionsHandler->MoveForward(-1, this);
+	}
+}
+
+void AProject_HybriaCharacter::StopClimbLadder()
+{
+	if (!IsValid(CharacterMovementExtensionsHandler)) return;
+
+	if(CharacterMovementExtensionsHandler->CurrMovement == ECharacterMovement::LadderClibing)
+	{
+    	CharacterMovementExtensionsHandler->StopClimbingLadder();
+	}
+}
+
+void AProject_HybriaCharacter::OnStairEndCollision(AActor* OtherActor)
+{
+	//SetCanMoveAndState(false, ECharacterMovement::Walk);
+	Jump(); 
+}
+
+void AProject_HybriaCharacter::OnStairCollision(AActor* OtherActor)
+{
+	if (!IsValid(CharacterMovementExtensionsHandler)) return;
+
+	ALadder* Ladder = Cast<ALadder>(OtherActor);
+
+	if(!IsValid(Ladder)) return;
+
+    CharacterMovementExtensionsHandler->StartClimbingLadder(this, Ladder, ZCorrection, HandOffSet, BottomDistanceToDrop);
+
+}
+
+float AProject_HybriaCharacter::GetClimbingLadderDirection()
+{
+	if (!IsValid(CharacterMovementExtensionsHandler)) return 0.0;
+
+    return CharacterMovementExtensionsHandler->GetClimbingLadderDirection();
+}
+
 void AProject_HybriaCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
 {
-	if (CharacterMovementExtensionsHandler == nullptr) return;
+	if (!IsValid(CharacterMovementExtensionsHandler)) return;
 
 	if (!CharacterMovementExtensionsHandler->bLockMoviment)
 		Jump();
@@ -132,7 +193,7 @@ void AProject_HybriaCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVect
 
 void AProject_HybriaCharacter::TurnAtRate(float Rate)
 {
-	if (CharacterMovementExtensionsHandler == nullptr) return;
+	if (!IsValid(CharacterMovementExtensionsHandler)) return;
 	// calculate delta for this frame from the rate information
 
 	if (!CharacterMovementExtensionsHandler->bLockMoviment)
@@ -141,7 +202,7 @@ void AProject_HybriaCharacter::TurnAtRate(float Rate)
 
 void AProject_HybriaCharacter::LookUpAtRate(float Rate)
 {
-	if (CharacterMovementExtensionsHandler == nullptr) return;
+	if (!IsValid(CharacterMovementExtensionsHandler)) return;
 	// calculate delta for this frame from the rate information
 
 	if (!CharacterMovementExtensionsHandler->bLockMoviment)
@@ -150,33 +211,14 @@ void AProject_HybriaCharacter::LookUpAtRate(float Rate)
 
 void AProject_HybriaCharacter::MoveForward(float Value)
 {
-	if (CharacterMovementExtensionsHandler == nullptr) return;
-	if (!CharacterMovementExtensionsHandler->bLockMoviment && (Controller != nullptr) && (Value != 0.0f))
-	{
-		// find out which way is forward
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-
-		// get forward vector
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		AddMovementInput(Direction, Value);
-	}
+	if (!IsValid(CharacterMovementExtensionsHandler)) return;
+	CharacterMovementExtensionsHandler->MoveForward(Value, this);
 }
 
 void AProject_HybriaCharacter::MoveRight(float Value)
 {
-	if (CharacterMovementExtensionsHandler == nullptr) return;
-	if (!CharacterMovementExtensionsHandler->bLockMoviment && (Controller != nullptr) && (Value != 0.0f))
-	{
-		// find out which way is right
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-
-		// get right vector
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-		// add movement in that direction
-		AddMovementInput(Direction, Value);
-	}
+	if (!IsValid(CharacterMovementExtensionsHandler)) return;
+	CharacterMovementExtensionsHandler->MoveRight(Value, this);
 }
 
 void AProject_HybriaCharacter::FinishClimbing()
@@ -185,10 +227,15 @@ void AProject_HybriaCharacter::FinishClimbing()
 	CharacterMovementExtensionsHandler->FinishClimbing();
 }
 
-void AProject_HybriaCharacter::SetCanMoveAndState(bool bCanMove, ECharacterMovement Movement) 
+void AProject_HybriaCharacter::SetCanMoveAndState(bool bLockMoviment, ECharacterMovement Movement) 
 {
-	if (CharacterMovementExtensionsHandler == nullptr) return;
+	if (!IsValid(CharacterMovementExtensionsHandler)) return;
 
-	CharacterMovementExtensionsHandler->bLockMoviment = bCanMove;
-	CharacterMovementExtensionsHandler->CurrMovement = Movement;
+	CharacterMovementExtensionsHandler->ChangeState(bLockMoviment, Movement, this);
+}
+
+ECharacterMovement AProject_HybriaCharacter::GetCurrMovement()
+{
+	if (!IsValid(CharacterMovementExtensionsHandler)) return ECharacterMovement::Walk;
+	return CharacterMovementExtensionsHandler->CurrMovement;
 }

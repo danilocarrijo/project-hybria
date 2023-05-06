@@ -21,21 +21,21 @@ UCharacterMovementExtensionsClimb::UCharacterMovementExtensionsClimb()
 void UCharacterMovementExtensionsClimb::Tick(AProject_HybriaCharacter *Character)
 {
 
-    if (Character == nullptr || Character->ClimbMontage == nullptr)
+    if (!IsValid(Character) || !IsValid(Character->ClimbMontage))
         return;
 
     UCapsuleComponent *Capsule = Character->GetCapsuleComponent();
 
-    if (Capsule == nullptr)
+    if (!IsValid(Capsule))
         return;
 
     UCharacterMovementComponent *MovementComponent = Cast<UCharacterMovementComponent>(Character->GetMovementComponent());
 
-    if (MovementComponent == nullptr)
+    if (!IsValid(MovementComponent))
         return;
 
     USkeletalMeshComponent *SkeletalMeshComponent = Character->GetMesh();
-    if (SkeletalMeshComponent == nullptr)
+    if (!IsValid(SkeletalMeshComponent))
         return;
 
     float HalfHeight = Capsule->GetScaledCapsuleHalfHeight();
@@ -78,12 +78,12 @@ void UCharacterMovementExtensionsClimb::Tick(AProject_HybriaCharacter *Character
 
             auto Mesh = Character->GetMesh();
 
-            if (Mesh == nullptr)
+            if (!IsValid(Mesh))
                 return;
 
             auto AnimInstance = Mesh->GetAnimInstance();
 
-            if (AnimInstance == nullptr)
+            if (!IsValid(AnimInstance))
                 return;
 
             AnimInstance->Montage_Play(Character->ClimbMontage, 1.0f);
@@ -96,20 +96,20 @@ void UCharacterMovementExtensionsClimb::Tick(AProject_HybriaCharacter *Character
 
 void UCharacterMovementExtensionsClimb::FinishClimbing()
 {         
-    if (CapsuleComponent == nullptr)
+    if (!IsValid(CapsuleComponent))
         return;
 
-    if (ActorComponent == nullptr)
+    if (!IsValid(ActorComponent))
         return;
 
     auto Mesh = ActorComponent->GetMesh();
                 
-    if (Mesh == nullptr)
+    if (!IsValid(Mesh))
         return;
 
     auto AnimInstance = Mesh->GetAnimInstance();
 
-    if (AnimInstance == nullptr)
+    if (!IsValid(AnimInstance))
         return;
 
     AnimInstance->Montage_Pause(ActorComponent->ClimbMontage);
@@ -126,20 +126,20 @@ void UCharacterMovementExtensionsClimb::FinishClimbing()
 
 void UCharacterMovementExtensionsClimb::JumbToFloor()
 {
-    if (CapsuleComponent == nullptr)
+    if (!IsValid(CapsuleComponent))
         return;
 
-    if (ActorComponent == nullptr)
+    if (!IsValid(ActorComponent))
         return;
 
     auto Mesh = ActorComponent->GetMesh();
                 
-    if (Mesh == nullptr)
+    if (!IsValid(Mesh))
         return;
 
     auto AnimInstance = Mesh->GetAnimInstance();
 
-    if (AnimInstance == nullptr)
+    if (!IsValid(AnimInstance))
         return;
 
     AnimInstance->Montage_Resume(ActorComponent->ClimbMontage);
@@ -160,7 +160,7 @@ void UCharacterMovementExtensionsClimb::JumbToFloor()
 
 void UCharacterMovementExtensionsClimb::FreeMovement()
 {
-    if (ActorComponent == nullptr)
+    if (!IsValid(ActorComponent))
         return;   
     ActorComponent->SetCanMoveAndState(false, ECharacterMovement::Walk);
     UCharacterMovementComponent *MovementComponent = Cast<UCharacterMovementComponent>(ActorComponent->GetMovementComponent());

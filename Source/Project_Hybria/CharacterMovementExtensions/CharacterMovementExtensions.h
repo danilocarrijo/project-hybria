@@ -12,6 +12,13 @@ class UCharacterMovementExtensions: public UObject
 private:
     class UCharacterMovementExtensionsClimb* ClimbExtensions;
     class UCharacterMovementExtensionsEdgeJump* EdgeJumpExtensions;
+    class UCharacterMovementExtensionsLadde* LadderClimbingExtensions;
+
+	void MoveForwardWalk(float Value, AProject_HybriaCharacter *Character);
+
+	void MoveRightWalk(float Value, AProject_HybriaCharacter *Character);
+
+    void MoveForwardLadder(float Value, AProject_HybriaCharacter *Character);
 
 public:
     UCharacterMovementExtensions();
@@ -24,9 +31,23 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MyActor")
         bool bLockMoviment = false;
 
-    void ClimbEvent(class UAnimMontage* ClimbMontage, float HangAnimRate, float ClimbAnimRate, int HangHandOffset, int HangZOffset);
+    void Init(class AProject_HybriaCharacter *Character);
 
-    void EdgeJumpEvent();
+    void ChangeState(bool bLockMoviment, ECharacterMovement Movement, AProject_HybriaCharacter *Character);
 
     void FinishClimbing();
+
+    void Jump(AProject_HybriaCharacter *Character);
+
+	/** Called for forwards/backward input */
+	void MoveForward(float Value, AProject_HybriaCharacter *Character);
+
+	/** Called for side to side input */
+	void MoveRight(float Value, AProject_HybriaCharacter *Character);
+
+    void StartClimbingLadder(class AProject_HybriaCharacter *Character, class ALadder *Ladder, float ZCorrection, float OffSet, float BottomDistanceToDrop);
+
+    void StopClimbingLadder();
+
+	float GetClimbingLadderDirection();
 };
