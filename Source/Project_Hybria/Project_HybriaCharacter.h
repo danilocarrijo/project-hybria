@@ -30,16 +30,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-    UFUNCTION(BlueprintCallable)
-    void FinishClimbing();
-
 protected:
-
-	/** Called for forwards/backward input */
-	void MoveForward(float Value);
-
-	/** Called for side to side input */
-	void MoveRight(float Value);
 
 	/** 
 	 * Called via input to turn at a given rate. 
@@ -75,39 +66,14 @@ public:
 
 	void PlayMontage(class UAnimMontage* Montage, float Rate);
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UCharacterMovementExtensions* CharacterMovementExtensionsHandler;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Climb Movement")
-        class UAnimMontage* ClimbMontage;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Climb Movement")
-        float HangAnimRate = 0.5f;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Climb Movement")
-        float ClimbAnimRate = 0.5f;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Climb Movement")
-        int HangHandOffset = 2;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Climb Movement")
-        int HangZOffset = 200;
-
 	void SetCanMoveAndState(bool bCanMove, ECharacterMovement Movement);
 
 private:
 
 	UPROPERTY(EditAnywhere)
 		float TraceDistance = 50;
-
-	FVector WallNormal;
-
-	FVector WallLocation;
-
-	bool SphereTraceByChannel(FVector Start, FVector End, float Radius, ECollisionChannel TraceChannel, FHitResult& HitResult, bool bDebug);
-
-	bool isClimbing = false;
-
-	void ClimbEvent();
 
 	bool bIsGrounded = false;
 

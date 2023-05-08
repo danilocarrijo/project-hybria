@@ -38,4 +38,6 @@ public:
     int HangHandOffset;
 
     int HangZOffset;
+
+    class UAnimMontage* ClimbMontage;
 };

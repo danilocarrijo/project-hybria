@@ -20,21 +20,12 @@
 void AProject_HybriaCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (CharacterMovementExtensionsHandler == nullptr) {
-		
-
-	CharacterMovementExtensionsHandler = NewObject<UCharacterMovementExtensions>();
-
-	CharacterMovementExtensionsHandler->CurrMovement = ECharacterMovement::Walk;
-	CharacterMovementExtensionsHandler->ClimbEvent(ClimbMontage, HangAnimRate, ClimbAnimRate, HangHandOffset, HangZOffset);
-	CharacterMovementExtensionsHandler->EdgeJumpEvent();
-	}
 }
 
 AProject_HybriaCharacter::AProject_HybriaCharacter()
 {
-	ClimbMontage = CreateDefaultSubobject<UAnimMontage>(TEXT("Climb Montage"));
+	CharacterMovementExtensionsHandler = CreateDefaultSubobject<UCharacterMovementExtensions>(TEXT("Character Movement Extensions"));
+
 
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -78,16 +69,11 @@ AProject_HybriaCharacter::AProject_HybriaCharacter()
 void AProject_HybriaCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if(CharacterMovementExtensionsHandler == nullptr) return;
-
-	//UE_LOG(LogTemp, Display, TEXT("%s"),CharacterMovementExtensionsHandler->bLockMoviment);
-	CharacterMovementExtensionsHandler->Tick(this);
 }
 
 void AProject_HybriaCharacter::PlayMontage(class UAnimMontage* Montage, float Rate)
 {
-    UE_LOG(LogTemp, Display, TEXT("%s"), *Montage->GetName());
+    //UE_LOG(LogTemp, Display, TEXT("%s"), *Montage->GetName());
 	PlayAnimMontage(Montage, 1.0f);
 }
 
@@ -98,11 +84,6 @@ void AProject_HybriaCharacter::SetupPlayerInputComponent(class UInputComponent *
 {
 	// Set up gameplay key bindings
 	check(PlayerInputComponent);
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
-
-	PlayerInputComponent->BindAxis("Move Forward / Backward", this, &AProject_HybriaCharacter::MoveForward);
-	PlayerInputComponent->BindAxis("Move Right / Left", this, &AProject_HybriaCharacter::MoveRight);
 
 	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
 	// "turn" handles devices that provide an absolute delta, such as a mouse.
@@ -119,7 +100,7 @@ void AProject_HybriaCharacter::SetupPlayerInputComponent(class UInputComponent *
 
 void AProject_HybriaCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
 {
-	if (CharacterMovementExtensionsHandler == nullptr) return;
+	if (!IsValid(CharacterMovementExtensionsHandler)) return;
 
 	if (!CharacterMovementExtensionsHandler->bLockMoviment)
 		Jump();
@@ -132,7 +113,7 @@ void AProject_HybriaCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVect
 
 void AProject_HybriaCharacter::TurnAtRate(float Rate)
 {
-	if (CharacterMovementExtensionsHandler == nullptr) return;
+	if (!IsValid(CharacterMovementExtensionsHandler)) return;
 	// calculate delta for this frame from the rate information
 
 	if (!CharacterMovementExtensionsHandler->bLockMoviment)
@@ -141,54 +122,16 @@ void AProject_HybriaCharacter::TurnAtRate(float Rate)
 
 void AProject_HybriaCharacter::LookUpAtRate(float Rate)
 {
-	if (CharacterMovementExtensionsHandler == nullptr) return;
+	if (!IsValid(CharacterMovementExtensionsHandler)) return;
 	// calculate delta for this frame from the rate information
 
 	if (!CharacterMovementExtensionsHandler->bLockMoviment)
 		AddControllerPitchInput(Rate * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
 }
 
-void AProject_HybriaCharacter::MoveForward(float Value)
+void AProject_HybriaCharacter::SetCanMoveAndState(bool bLockMoviment, ECharacterMovement Movement) 
 {
-	if (CharacterMovementExtensionsHandler == nullptr) return;
-	if (!CharacterMovementExtensionsHandler->bLockMoviment && (Controller != nullptr) && (Value != 0.0f))
-	{
-		// find out which way is forward
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
+	if (!IsValid(CharacterMovementExtensionsHandler)) return;
 
-		// get forward vector
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		AddMovementInput(Direction, Value);
-	}
-}
-
-void AProject_HybriaCharacter::MoveRight(float Value)
-{
-	if (CharacterMovementExtensionsHandler == nullptr) return;
-	if (!CharacterMovementExtensionsHandler->bLockMoviment && (Controller != nullptr) && (Value != 0.0f))
-	{
-		// find out which way is right
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-
-		// get right vector
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-		// add movement in that direction
-		AddMovementInput(Direction, Value);
-	}
-}
-
-void AProject_HybriaCharacter::FinishClimbing()
-{
-    if ( CharacterMovementExtensionsHandler->CurrMovement == ECharacterMovement::Clibing )
-	CharacterMovementExtensionsHandler->FinishClimbing();
-}
-
-void AProject_HybriaCharacter::SetCanMoveAndState(bool bCanMove, ECharacterMovement Movement) 
-{
-	if (CharacterMovementExtensionsHandler == nullptr) return;
-
-	CharacterMovementExtensionsHandler->bLockMoviment = bCanMove;
-	CharacterMovementExtensionsHandler->CurrMovement = Movement;
+	CharacterMovementExtensionsHandler->ChangeState(bLockMoviment, Movement);
 }
