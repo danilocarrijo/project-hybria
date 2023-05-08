@@ -5,14 +5,46 @@
 #include "../Project_HybriaCharacter.h"
 #include "Engine/Engine.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "../Ladder.h"
 
 UCharacterMovementExtensions::UCharacterMovementExtensions()
 {
-
+	PrimaryComponentTick.bCanEverTick = true;
+    
+	ClimbMontage = CreateDefaultSubobject<UAnimMontage>(TEXT("Climb Montage"));
+	EdgeJumpingClimbMontage = CreateDefaultSubobject<UAnimMontage>(TEXT("Edge Jumping Climb Montage"));
 }
 
-void UCharacterMovementExtensions::Tick(AProject_HybriaCharacter *Character)
+// Called when the game starts
+void UCharacterMovementExtensions::BeginPlay()
 {
+	Super::BeginPlay();
+
+    Character = Cast<AProject_HybriaCharacter>(GetOwner());
+
+    LadderClimbingExtensions = NewObject<UCharacterMovementExtensionsLadde>();
+
+    LadderClimbingExtensions->LadderClimbSpeed = LadderClimbSpeed;    
+    
+    LadderClimbingExtensions->SetLadderProperties(HandOffSet, BottomDistanceToDrop, TopDistanceToClimb, EdgeJumpingClimbMontage);
+
+    EdgeJumpExtensions = NewObject<UCharacterMovementExtensionsEdgeJump>();
+
+    ClimbExtensions = NewObject<UCharacterMovementExtensionsClimb>();
+    CurrMovement = ECharacterMovement::Walk;
+    
+    ClimbExtensions->HangAnimRate = HangAnimRate;
+    ClimbExtensions->ClimbAnimRate = ClimbAnimRate;
+    ClimbExtensions->HangHandOffset = HangHandOffset;
+    ClimbExtensions->HangZOffset = HangZOffset;
+    ClimbExtensions->ClimbMontage = ClimbMontage;
+	
+}
+
+void UCharacterMovementExtensions::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
     if (!IsValid(Character))
         return;
 
@@ -27,67 +59,96 @@ void UCharacterMovementExtensions::Tick(AProject_HybriaCharacter *Character)
     }
 }
 
-void UCharacterMovementExtensions::Init(AProject_HybriaCharacter *Character)
+void UCharacterMovementExtensions::ClimbLadderUp()
 {
-    LadderClimbingExtensions = NewObject<UCharacterMovementExtensionsLadde>();
+    if(CurrMovement == ECharacterMovement::LadderClibing)
+	{
+		MoveForward(1);
+	}
+}
 
-    LadderClimbingExtensions->LadderClimbSpeed = Character->LadderClimbSpeed;
+void UCharacterMovementExtensions::ClimbLadderDown()
+{
+    if(CurrMovement == ECharacterMovement::LadderClibing)
+	{
+		MoveForward(-1);
+	}
+}
 
-    EdgeJumpExtensions = NewObject<UCharacterMovementExtensionsEdgeJump>();
+void UCharacterMovementExtensions::OnStairCollision(AActor* OtherActor)
+{
+	ALadder* LadderActor = Cast<ALadder>(OtherActor);
 
-    ClimbExtensions = NewObject<UCharacterMovementExtensionsClimb>();
-    CurrMovement = ECharacterMovement::Walk;
-    
-    ClimbExtensions->HangAnimRate = Character->HangAnimRate;
-    ClimbExtensions->ClimbAnimRate = Character->ClimbAnimRate;
-    ClimbExtensions->HangHandOffset = Character->HangHandOffset;
-    ClimbExtensions->HangZOffset = Character->HangZOffset;
+	if(!IsValid(LadderClimbingExtensions)) return;
+
+    CurrMovement = ECharacterMovement::LadderClibing;
+    bLockMoviment = true;
+
+    LadderClimbingExtensions->StartClimbingLadder(Character, LadderActor, ZCorrection);
+
 }
 
 void UCharacterMovementExtensions::FinishClimbing()
 {
+	if(!IsValid(ClimbExtensions)) return;
+
 	ClimbExtensions->FinishClimbing();
 }
 
-void UCharacterMovementExtensions::ChangeState(bool inbLockMoviment, ECharacterMovement Movement, AProject_HybriaCharacter *Character)
+void UCharacterMovementExtensions::FinishLadderClimbing()
+{
+	if(!IsValid(LadderClimbingExtensions)) return;
+
+	LadderClimbingExtensions->FinishLadderClimbing(Character);
+}
+
+void UCharacterMovementExtensions::ChangeState(bool inbLockMoviment, ECharacterMovement Movement)
 {
 	bLockMoviment = inbLockMoviment;
 	CurrMovement = Movement;
 }
 
-void UCharacterMovementExtensions::Jump(AProject_HybriaCharacter *Character)
+void UCharacterMovementExtensions::StopClimbLadder()
+{
+	if(CurrMovement == ECharacterMovement::LadderClibing)
+	{
+    	LadderClimbingExtensions->StopClimbingLadder();
+	}
+}
+
+void UCharacterMovementExtensions::Jump()
 {
     Character->Jump();
 }
 
-void UCharacterMovementExtensions::MoveForward(float Value, AProject_HybriaCharacter *Character)
+void UCharacterMovementExtensions::MoveForward(float Value)
 {
     switch (CurrMovement)
     {
         case ECharacterMovement::Walk:
-            MoveForwardWalk(Value, Character);
+            MoveForwardWalk(Value);
             break;
         case ECharacterMovement::LadderClibing:
-            MoveForwardLadder(Value, Character);
+            MoveForwardLadder(Value);
             break;
         default:
             break;
     }
 }
 
-void UCharacterMovementExtensions::MoveRight(float Value, AProject_HybriaCharacter *Character)
+void UCharacterMovementExtensions::MoveRight(float Value)
 {
     switch (CurrMovement)
     {
         case ECharacterMovement::Walk:
-            MoveRightWalk(Value, Character);
+            MoveRightWalk(Value);
             break;
         default:
             break;
     }
 }
 
-void UCharacterMovementExtensions::MoveForwardWalk(float Value, AProject_HybriaCharacter *Character)
+void UCharacterMovementExtensions::MoveForwardWalk(float Value)
 {
 	if (!bLockMoviment && (Character->Controller != nullptr) && (Value != 0.0f))
 	{
@@ -101,46 +162,11 @@ void UCharacterMovementExtensions::MoveForwardWalk(float Value, AProject_HybriaC
 	}
 }
 
-void UCharacterMovementExtensions::MoveForwardLadder(float Value, AProject_HybriaCharacter *Character)
+void UCharacterMovementExtensions::MoveForwardLadder(float Value)
 {
 	if(!IsValid(LadderClimbingExtensions)) return;
         
-    auto bDrop = LadderClimbingExtensions->DropBottom(Character);
-
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("A distância entre os pontos é %d"), bDrop));
-
-    if (bDrop)
-    {
-        CurrMovement = ECharacterMovement::Walk;
-        bLockMoviment = false;
-        Character->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
-        StopClimbingLadder();
-    }
-
-	if (!bDrop && Value != 0.0f)
-	{
-        LadderClimbingExtensions->Climb(Value, Character);
-	}
-}
-
-void UCharacterMovementExtensions::StopClimbingLadder()
-{
-	if(!IsValid(LadderClimbingExtensions)) return;
-
-    LadderClimbingExtensions->StopClimbingLadder();
-}
-
-void UCharacterMovementExtensions::StartClimbingLadder(AProject_HybriaCharacter *Character, ALadder *Ladder, float ZCorrection, float OffSet, float BottomDistanceToDrop)
-{
-	if(!IsValid(LadderClimbingExtensions)) return;
-    
-    LadderClimbingExtensions->SetLadderProperties(OffSet, BottomDistanceToDrop);
-
-    CurrMovement = ECharacterMovement::LadderClibing;
-    bLockMoviment = true;
-
-    LadderClimbingExtensions->StartClimbingLadder(Character, Ladder, ZCorrection);
-
+    LadderClimbingExtensions->Climb(Value, Character);
 }
 
 float UCharacterMovementExtensions::GetClimbingLadderDirection()
@@ -150,7 +176,7 @@ float UCharacterMovementExtensions::GetClimbingLadderDirection()
     return LadderClimbingExtensions->GetDirection();
 }
 
-void UCharacterMovementExtensions::MoveRightWalk(float Value, AProject_HybriaCharacter *Character)
+void UCharacterMovementExtensions::MoveRightWalk(float Value)
 {
 	if (!bLockMoviment && (Character->Controller != nullptr) && (Value != 0.0f))
 	{

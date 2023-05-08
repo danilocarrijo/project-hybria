@@ -22,9 +22,16 @@ public:
 
 	float GetDirection();
 
-    void SetLadderProperties(float OffSet, float BottomDistanceToDrop);
+    void SetLadderProperties(float OffSet, float BottomDistanceToDrop, float TopDistanceToClimb, class UAnimMontage* EdgeJumpingClimbMontage);
 
 	bool DropBottom(class AProject_HybriaCharacter *Character);
+
+	bool ClimbUp(AProject_HybriaCharacter *Character);
+
+    UFUNCTION(BlueprintCallable)
+    void FreeMovement();
+
+	void FinishLadderClimbing(class AProject_HybriaCharacter *Character);
 
 protected:
 	float Direction;
@@ -37,6 +44,18 @@ protected:
 
 	float BottomDistanceToDrop;
 
+	float TopDistanceToClimb;
+
 	float GetBottomDistance(class AProject_HybriaCharacter *Character);
+
+	float GetTopDistance(class AProject_HybriaCharacter *Character);
+
+	void FinishClimbUp(class AProject_HybriaCharacter *Character);
+
+	class UAnimMontage* EdgeJumpingClimbMontage;
+
+    class AProject_HybriaCharacter *ActorComponent;
+
+	bool bCanClimb = true;
 
 };

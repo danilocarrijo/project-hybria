@@ -5,8 +5,8 @@
 #include "Climb/CharacterMovementExtensionsClimb.h"
 #include "CharacterMovementExtensions.generated.h"
 
-UCLASS()
-class UCharacterMovementExtensions: public UObject
+UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+class PROJECT_HYBRIA_API UCharacterMovementExtensions: public UActorComponent
 {
     GENERATED_BODY()
 private:
@@ -14,40 +14,96 @@ private:
     class UCharacterMovementExtensionsEdgeJump* EdgeJumpExtensions;
     class UCharacterMovementExtensionsLadde* LadderClimbingExtensions;
 
-	void MoveForwardWalk(float Value, AProject_HybriaCharacter *Character);
+	void MoveForwardWalk(float Value);
 
-	void MoveRightWalk(float Value, AProject_HybriaCharacter *Character);
+	void MoveRightWalk(float Value);
 
-    void MoveForwardLadder(float Value, AProject_HybriaCharacter *Character);
+    void MoveForwardLadder(float Value);
 
 public:
     UCharacterMovementExtensions();
+
+	// Called every frame
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
     
-    void Tick(class AProject_HybriaCharacter *Character);
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Climb Movement")
+        class UAnimMontage* ClimbMontage;
+
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Climb Movement")
+        float HangAnimRate = 0.5f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Climb Movement")
+        float ClimbAnimRate = 0.5f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Climb Movement")
+        int HangHandOffset = 2;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Climb Movement")
+        int HangZOffset = 200;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ladder Climb Movement")
+        int LadderClimbSpeed = 200;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ladder Climb Movement")
+        int HandOffSet = 20;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ladder Climb Movement")
+        float ZCorrection = 20;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ladder Climb Movement")
+        float BottomDistanceToDrop = 20;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ladder Climb Movement")
+        float TopDistanceToClimb = 20;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ladder Climb Movement")
+        class UAnimMontage* EdgeJumpingClimbMontage;
+
+protected:
+	// Called when the game starts
+	virtual void BeginPlay() override;
+
+    class AProject_HybriaCharacter *Character;
 
 public:
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	ECharacterMovement CurrMovement = ECharacterMovement::Walk;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MyActor")
         bool bLockMoviment = false;
 
-    void Init(class AProject_HybriaCharacter *Character);
+    void ChangeState(bool bLockMoviment, ECharacterMovement Movement);
 
-    void ChangeState(bool bLockMoviment, ECharacterMovement Movement, AProject_HybriaCharacter *Character);
+    UFUNCTION(BlueprintCallable)
+    void Jump();
 
+    UFUNCTION(BlueprintCallable)
+	void MoveForward(float Value);
+
+    UFUNCTION(BlueprintCallable)
+	void MoveRight(float Value);
+
+    UFUNCTION(BlueprintCallable)
+	void ClimbLadderUp();
+
+    UFUNCTION(BlueprintCallable)
+	void ClimbLadderDown();
+
+    UFUNCTION(BlueprintCallable)
+    void OnStairCollision(class AActor* OtherActor);
+
+    UFUNCTION(BlueprintCallable)
     void FinishClimbing();
 
-    void Jump(AProject_HybriaCharacter *Character);
+    UFUNCTION(BlueprintCallable)
+    void FinishLadderClimbing();
 
-	/** Called for forwards/backward input */
-	void MoveForward(float Value, AProject_HybriaCharacter *Character);
+    UFUNCTION(BlueprintCallable)
+    void StopClimbLadder();
 
-	/** Called for side to side input */
-	void MoveRight(float Value, AProject_HybriaCharacter *Character);
-
-    void StartClimbingLadder(class AProject_HybriaCharacter *Character, class ALadder *Ladder, float ZCorrection, float OffSet, float BottomDistanceToDrop);
-
-    void StopClimbingLadder();
-
+    UFUNCTION(BlueprintCallable)
 	float GetClimbingLadderDirection();
 };

@@ -21,7 +21,7 @@ UCharacterMovementExtensionsClimb::UCharacterMovementExtensionsClimb()
 void UCharacterMovementExtensionsClimb::Tick(AProject_HybriaCharacter *Character)
 {
 
-    if (!IsValid(Character) || !IsValid(Character->ClimbMontage))
+    if (!IsValid(Character) || !IsValid(ClimbMontage))
         return;
 
     UCapsuleComponent *Capsule = Character->GetCapsuleComponent();
@@ -86,7 +86,7 @@ void UCharacterMovementExtensionsClimb::Tick(AProject_HybriaCharacter *Character
             if (!IsValid(AnimInstance))
                 return;
 
-            AnimInstance->Montage_Play(Character->ClimbMontage, 1.0f);
+            AnimInstance->Montage_Play(ClimbMontage, 1.0f);
 
             return;
         }
@@ -112,7 +112,7 @@ void UCharacterMovementExtensionsClimb::FinishClimbing()
     if (!IsValid(AnimInstance))
         return;
 
-    AnimInstance->Montage_Pause(ActorComponent->ClimbMontage);
+    AnimInstance->Montage_Pause(ClimbMontage);
     FLatentActionInfo Looll;
     Looll.CallbackTarget = this;
     Looll.ExecutionFunction = "JumbToFloor";
@@ -142,7 +142,7 @@ void UCharacterMovementExtensionsClimb::JumbToFloor()
     if (!IsValid(AnimInstance))
         return;
 
-    AnimInstance->Montage_Resume(ActorComponent->ClimbMontage);
+    AnimInstance->Montage_Resume(ClimbMontage);
 
     float HalfHeight = CapsuleComponent->GetScaledCapsuleHalfHeight();
 

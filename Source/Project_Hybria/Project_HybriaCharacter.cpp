@@ -12,7 +12,6 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "GameFramework/Character.h"
 #include "CharacterMovementExtensions/CharacterMovementExtensions.h"
-#include "Ladder.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AProject_HybriaCharacter
@@ -21,20 +20,12 @@
 void AProject_HybriaCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (!IsValid(CharacterMovementExtensionsHandler)) {
-		
-
-	CharacterMovementExtensionsHandler = NewObject<UCharacterMovementExtensions>();
-
-	CharacterMovementExtensionsHandler->CurrMovement = ECharacterMovement::Walk;
-	CharacterMovementExtensionsHandler->Init(this);
-	}
 }
 
 AProject_HybriaCharacter::AProject_HybriaCharacter()
 {
-	ClimbMontage = CreateDefaultSubobject<UAnimMontage>(TEXT("Climb Montage"));
+	CharacterMovementExtensionsHandler = CreateDefaultSubobject<UCharacterMovementExtensions>(TEXT("Character Movement Extensions"));
+
 
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -78,11 +69,6 @@ AProject_HybriaCharacter::AProject_HybriaCharacter()
 void AProject_HybriaCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if(CharacterMovementExtensionsHandler == nullptr) return;
-
-	//UE_LOG(LogTemp, Display, TEXT("%s"),CharacterMovementExtensionsHandler->bLockMoviment);
-	CharacterMovementExtensionsHandler->Tick(this);
 }
 
 void AProject_HybriaCharacter::PlayMontage(class UAnimMontage* Montage, float Rate)
@@ -98,17 +84,6 @@ void AProject_HybriaCharacter::SetupPlayerInputComponent(class UInputComponent *
 {
 	// Set up gameplay key bindings
 	check(PlayerInputComponent);
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
-
-	PlayerInputComponent->BindAction("ClimbLadderUp", IE_Pressed, this, &AProject_HybriaCharacter::ClimbLadderUp);
-    PlayerInputComponent->BindAction("ClimbLadderUp", IE_Released, this, &AProject_HybriaCharacter::StopClimbLadder);
-
-	PlayerInputComponent->BindAction("ClimbLadderDown", IE_Pressed, this, &AProject_HybriaCharacter::ClimbLadderDown);
-    PlayerInputComponent->BindAction("ClimbLadderDown", IE_Released, this, &AProject_HybriaCharacter::StopClimbLadder);
-
-	PlayerInputComponent->BindAxis("Move Forward / Backward", this, &AProject_HybriaCharacter::MoveForward);
-	PlayerInputComponent->BindAxis("Move Right / Left", this, &AProject_HybriaCharacter::MoveRight);
 
 	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
 	// "turn" handles devices that provide an absolute delta, such as a mouse.
@@ -121,61 +96,6 @@ void AProject_HybriaCharacter::SetupPlayerInputComponent(class UInputComponent *
 	// handle touch devices
 	PlayerInputComponent->BindTouch(IE_Pressed, this, &AProject_HybriaCharacter::TouchStarted);
 	PlayerInputComponent->BindTouch(IE_Released, this, &AProject_HybriaCharacter::TouchStopped);
-}
-
-void AProject_HybriaCharacter::ClimbLadderUp()
-{
-	if (!IsValid(CharacterMovementExtensionsHandler)) return;
-
-	if(CharacterMovementExtensionsHandler->CurrMovement == ECharacterMovement::LadderClibing)
-	{
-		CharacterMovementExtensionsHandler->MoveForward(1, this);
-	}
-}
-
-void AProject_HybriaCharacter::ClimbLadderDown()
-{
-	if (!IsValid(CharacterMovementExtensionsHandler)) return;
-
-	if(CharacterMovementExtensionsHandler->CurrMovement == ECharacterMovement::LadderClibing)
-	{
-		CharacterMovementExtensionsHandler->MoveForward(-1, this);
-	}
-}
-
-void AProject_HybriaCharacter::StopClimbLadder()
-{
-	if (!IsValid(CharacterMovementExtensionsHandler)) return;
-
-	if(CharacterMovementExtensionsHandler->CurrMovement == ECharacterMovement::LadderClibing)
-	{
-    	CharacterMovementExtensionsHandler->StopClimbingLadder();
-	}
-}
-
-void AProject_HybriaCharacter::OnStairEndCollision(AActor* OtherActor)
-{
-	//SetCanMoveAndState(false, ECharacterMovement::Walk);
-	Jump(); 
-}
-
-void AProject_HybriaCharacter::OnStairCollision(AActor* OtherActor)
-{
-	if (!IsValid(CharacterMovementExtensionsHandler)) return;
-
-	ALadder* Ladder = Cast<ALadder>(OtherActor);
-
-	if(!IsValid(Ladder)) return;
-
-    CharacterMovementExtensionsHandler->StartClimbingLadder(this, Ladder, ZCorrection, HandOffSet, BottomDistanceToDrop);
-
-}
-
-float AProject_HybriaCharacter::GetClimbingLadderDirection()
-{
-	if (!IsValid(CharacterMovementExtensionsHandler)) return 0.0;
-
-    return CharacterMovementExtensionsHandler->GetClimbingLadderDirection();
 }
 
 void AProject_HybriaCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
@@ -209,33 +129,9 @@ void AProject_HybriaCharacter::LookUpAtRate(float Rate)
 		AddControllerPitchInput(Rate * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
 }
 
-void AProject_HybriaCharacter::MoveForward(float Value)
-{
-	if (!IsValid(CharacterMovementExtensionsHandler)) return;
-	CharacterMovementExtensionsHandler->MoveForward(Value, this);
-}
-
-void AProject_HybriaCharacter::MoveRight(float Value)
-{
-	if (!IsValid(CharacterMovementExtensionsHandler)) return;
-	CharacterMovementExtensionsHandler->MoveRight(Value, this);
-}
-
-void AProject_HybriaCharacter::FinishClimbing()
-{
-    if ( CharacterMovementExtensionsHandler->CurrMovement == ECharacterMovement::Clibing )
-	CharacterMovementExtensionsHandler->FinishClimbing();
-}
-
 void AProject_HybriaCharacter::SetCanMoveAndState(bool bLockMoviment, ECharacterMovement Movement) 
 {
 	if (!IsValid(CharacterMovementExtensionsHandler)) return;
 
-	CharacterMovementExtensionsHandler->ChangeState(bLockMoviment, Movement, this);
-}
-
-ECharacterMovement AProject_HybriaCharacter::GetCurrMovement()
-{
-	if (!IsValid(CharacterMovementExtensionsHandler)) return ECharacterMovement::Walk;
-	return CharacterMovementExtensionsHandler->CurrMovement;
+	CharacterMovementExtensionsHandler->ChangeState(bLockMoviment, Movement);
 }

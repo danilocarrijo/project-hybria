@@ -30,28 +30,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-    UFUNCTION(BlueprintCallable)
-    ECharacterMovement GetCurrMovement();
-
-    UFUNCTION(BlueprintCallable)
-    void FinishClimbing();
-
-    UFUNCTION(BlueprintCallable)
-    void OnStairCollision(class AActor* OtherActor);
-
-    UFUNCTION(BlueprintCallable)
-    void OnStairEndCollision(class AActor* OtherActor);
-
-    UFUNCTION(BlueprintCallable)
-    float GetClimbingLadderDirection();
-
 protected:
-
-	/** Called for forwards/backward input */
-	void MoveForward(float Value);
-
-	/** Called for side to side input */
-	void MoveRight(float Value);
 
 	/** 
 	 * Called via input to turn at a given rate. 
@@ -87,35 +66,8 @@ public:
 
 	void PlayMontage(class UAnimMontage* Montage, float Rate);
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UCharacterMovementExtensions* CharacterMovementExtensionsHandler;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Climb Movement")
-        class UAnimMontage* ClimbMontage;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Climb Movement")
-        float HangAnimRate = 0.5f;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Climb Movement")
-        float ClimbAnimRate = 0.5f;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Climb Movement")
-        int HangHandOffset = 2;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Climb Movement")
-        int HangZOffset = 200;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ladder Climb Movement")
-        int LadderClimbSpeed = 200;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ladder Climb Movement")
-        int HandOffSet = 20;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ladder Climb Movement")
-        float ZCorrection = 20;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ladder Climb Movement")
-        float BottomDistanceToDrop = 20;
-
 	void SetCanMoveAndState(bool bCanMove, ECharacterMovement Movement);
 
 private:
@@ -123,23 +75,7 @@ private:
 	UPROPERTY(EditAnywhere)
 		float TraceDistance = 50;
 
-	FVector WallNormal;
-
-	FVector WallLocation;
-
-	bool SphereTraceByChannel(FVector Start, FVector End, float Radius, ECollisionChannel TraceChannel, FHitResult& HitResult, bool bDebug);
-
-	bool isClimbing = false;
-
-	void ClimbEvent();
-
 	bool bIsGrounded = false;
-
-	void ClimbLadderUp();
-
-	void ClimbLadderDown();
-
-	void StopClimbLadder();
 
 };
 
