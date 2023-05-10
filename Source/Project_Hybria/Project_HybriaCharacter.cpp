@@ -12,6 +12,9 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "GameFramework/Character.h"
 #include "CharacterMovementExtensions/CharacterMovementExtensions.h"
+#include "Engine/GameViewportClient.h"
+#include "UI/PlayerMain.h"
+#include "HealthSystem/HealthSystem.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AProject_HybriaCharacter
@@ -20,12 +23,29 @@
 void AProject_HybriaCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	UUserWidget *UserWidget = CreateWidget<UUserWidget>(GetWorld(), PlayerWidget);
+        
+
+	if (IsValid(UserWidget))
+	{
+		UserWidget->AddToViewport();
+
+		UPlayerMain *PlayerMain = Cast<UPlayerMain>(UserWidget);
+
+		if (IsValid(PlayerMain))
+		{
+			PlayerMainInstance = PlayerMain;
+			HealthSystem->InitUI(PlayerMainInstance);
+		}
+	}
 }
 
 AProject_HybriaCharacter::AProject_HybriaCharacter()
 {
 	CharacterMovementExtensionsHandler = CreateDefaultSubobject<UCharacterMovementExtensions>(TEXT("Character Movement Extensions"));
 
+	HealthSystem = CreateDefaultSubobject<UHealthSystem>(TEXT("Health System"));
 
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -134,4 +154,16 @@ void AProject_HybriaCharacter::SetCanMoveAndState(bool bLockMoviment, ECharacter
 	if (!IsValid(CharacterMovementExtensionsHandler)) return;
 
 	CharacterMovementExtensionsHandler->ChangeState(bLockMoviment, Movement);
+}
+
+float AProject_HybriaCharacter::TakeDamage(float DamageAmount, FDamageEvent const &DamageEvent, AController *EventInstigator, AActor *DamageCauser)
+{
+	float Damage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	if (IsValid(HealthSystem))
+	{
+		HealthSystem->TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	}
+
+	return Damage;
 }

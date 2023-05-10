@@ -6,6 +6,7 @@
 #include "Engine/Engine.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "../Ladder.h"
+#include "Swimming/SimmingMovementExtensions.h"
 
 UCharacterMovementExtensions::UCharacterMovementExtensions()
 {
@@ -23,6 +24,10 @@ void UCharacterMovementExtensions::BeginPlay()
     Character = Cast<AProject_HybriaCharacter>(GetOwner());
 
     LadderClimbingExtensions = NewObject<UCharacterMovementExtensionsLadde>();
+
+    SimmingMovementExtensions = NewObject<USimmingMovementExtensions>();
+
+    SimmingMovementExtensions->ZCorrection = WaterSurfaceZCorrection;
 
     LadderClimbingExtensions->LadderClimbSpeed = LadderClimbSpeed;    
     
@@ -48,11 +53,24 @@ void UCharacterMovementExtensions::TickComponent(float DeltaTime, ELevelTick Tic
     if (!IsValid(Character))
         return;
 
+    bool bHitWaterSurface = false;
+
     switch (CurrMovement)
     {
         case ECharacterMovement::Walk:
+            bHitWaterSurface = SimmingMovementExtensions->CheckForWaterSurface(Character);
+            if(!bHitWaterSurface)
+            {
+                ClimbExtensions->Tick(Character);
+                EdgeJumpExtensions->Tick(Character);
+                
+            } else {
+                CurrMovement = ECharacterMovement::Swimming;
+                SimmingMovementExtensions->StartSwimming(Character);
+            }
+            break;
+        case ECharacterMovement::Swimming:
             ClimbExtensions->Tick(Character);
-            EdgeJumpExtensions->Tick(Character);
             break;
         default:
             break;
@@ -128,6 +146,9 @@ void UCharacterMovementExtensions::MoveForward(float Value)
         case ECharacterMovement::Walk:
             MoveForwardWalk(Value);
             break;
+        case ECharacterMovement::Swimming:
+            MoveForwardWalk(Value);
+            break;
         case ECharacterMovement::LadderClibing:
             MoveForwardLadder(Value);
             break;
@@ -141,6 +162,9 @@ void UCharacterMovementExtensions::MoveRight(float Value)
     switch (CurrMovement)
     {
         case ECharacterMovement::Walk:
+            MoveRightWalk(Value);
+            break;
+        case ECharacterMovement::Swimming:
             MoveRightWalk(Value);
             break;
         default:

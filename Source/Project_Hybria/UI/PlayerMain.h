@@ -18,5 +18,14 @@ public:
 	virtual void NativeConstruct() override;
 
     UFUNCTION(BlueprintCallable)
-    void AddHeart();
+    void AddHearts(int qtd, bool bClear);
+
+    UFUNCTION(BlueprintCallable)
+    void UpdateHearts(float Health);
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget))
+    class UWrapBox* WrapBox;
+
+    UPROPERTY(EditAnywhere)
+    TSubclassOf<class UUserWidget> HeartWidget;
 };

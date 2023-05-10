@@ -13,6 +13,7 @@ private:
     class UCharacterMovementExtensionsClimb* ClimbExtensions;
     class UCharacterMovementExtensionsEdgeJump* EdgeJumpExtensions;
     class UCharacterMovementExtensionsLadde* LadderClimbingExtensions;
+    class USimmingMovementExtensions* SimmingMovementExtensions;
 
 	void MoveForwardWalk(float Value);
 
@@ -60,6 +61,9 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ladder Climb Movement")
         class UAnimMontage* EdgeJumpingClimbMontage;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Swim Movement")
+        float WaterSurfaceZCorrection;
 
 protected:
 	// Called when the game starts

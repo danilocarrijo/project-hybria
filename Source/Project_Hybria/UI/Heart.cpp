@@ -6,12 +6,17 @@
 #include "Components/SizeBox.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/Overlay.h"
+#include "Engine/Engine.h"
 
-void UHeart::NativeConstruct()
+UHeart::UHeart(const FObjectInitializer& ObjectInitializer)
+    : Super(ObjectInitializer)
 {
-    Super::NativeConstruct();
 
     SizeBox = NewObject<USizeBox>(this, USizeBox::StaticClass(), TEXT("Size Box"));
+    
+    // Defina o tamanho desejado para o componente SizeBox
+    SizeBox->SetWidthOverride(100.0f);
+    SizeBox->SetHeightOverride(100.0f);
 
     if (SizeBox)
     {
@@ -29,5 +34,18 @@ void UHeart::NativeConstruct()
     if (Overlay)
     {
         Overlay->AddChild(SizeBox);
+    }
+}
+
+void UHeart::NativeConstruct()
+{
+    Super::NativeConstruct();
+}
+
+void UHeart::SetValue(float Value)
+{
+    if (IsValid(Material))
+    {
+        Material->SetScalarParameterValue("percent", Value);
     }
 }

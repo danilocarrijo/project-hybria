@@ -15,7 +15,11 @@ class PROJECT_HYBRIA_API UHeart : public UUserWidget
 	GENERATED_BODY()
 	
 public:
+	UHeart(const FObjectInitializer& ObjectInitializer);
+
 	virtual void NativeConstruct() override;
+
+	void SetValue(float Value);
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget))
     class UImage* Heart;
@@ -23,6 +27,6 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget))
     class USizeBox* SizeBox;
 
-private:
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UMaterialInstanceDynamic* Material;
 };
