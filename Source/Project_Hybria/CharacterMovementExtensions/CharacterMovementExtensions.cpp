@@ -29,7 +29,11 @@ void UCharacterMovementExtensions::BeginPlay()
 
     SimmingMovementExtensions->ZCorrection = WaterSurfaceZCorrection;
 
-    LadderClimbingExtensions->LadderClimbSpeed = LadderClimbSpeed;    
+    SimmingMovementExtensions->WaterRippleEffect  = WaterRippleEffect;
+
+    SimmingMovementExtensions->WaterSplashEffect  = WaterSplashEffect;
+
+    LadderClimbingExtensions->LadderClimbSpeed = LadderClimbSpeed;
     
     LadderClimbingExtensions->SetLadderProperties(HandOffSet, BottomDistanceToDrop, TopDistanceToClimb, EdgeJumpingClimbMontage);
 
@@ -54,6 +58,7 @@ void UCharacterMovementExtensions::TickComponent(float DeltaTime, ELevelTick Tic
         return;
 
     bool bHitWaterSurface = false;
+    bool bHitWall = false;
 
     switch (CurrMovement)
     {
@@ -70,7 +75,11 @@ void UCharacterMovementExtensions::TickComponent(float DeltaTime, ELevelTick Tic
             }
             break;
         case ECharacterMovement::Swimming:
-            ClimbExtensions->Tick(Character);
+            bHitWall = ClimbExtensions->Tick(Character);
+            if(bHitWall)
+            {
+                SimmingMovementExtensions->StotSwimming();
+            }
             break;
         default:
             break;
@@ -213,5 +222,12 @@ void UCharacterMovementExtensions::MoveRightWalk(float Value)
 		// add movement in that direction
 		Character->AddMovementInput(Direction, Value);
 	}
+}
+
+void UCharacterMovementExtensions::EdgeClimbingFreeMovement()
+{
+	if(!IsValid(ClimbExtensions)) return;
+
+	ClimbExtensions->FreeMovement();
 }
 

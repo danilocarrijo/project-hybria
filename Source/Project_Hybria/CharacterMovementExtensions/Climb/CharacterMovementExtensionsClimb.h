@@ -24,10 +24,13 @@ public:
     UFUNCTION(BlueprintCallable)
     void FreeMovement();
 
+    UFUNCTION(BlueprintCallable)
+    void SetCanWalkAndFinish();
+
 protected:
 
 public:
-    void Tick(class AProject_HybriaCharacter *Character);
+    bool Tick(class AProject_HybriaCharacter *Character);
 
     void FinishClimbing();
 

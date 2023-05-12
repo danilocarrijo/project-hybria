@@ -18,7 +18,19 @@ public:
 
     void StartSwimming(class AProject_HybriaCharacter *Character);
 
-protected:
+    void StotSwimming();
 
+    class UNiagaraSystem* WaterRippleEffect;
+
+    class UNiagaraSystem* WaterSplashEffect;
+
+protected:
+    class UNiagaraComponent* NiagaraComp;
+
+    class UNiagaraComponent* NiagaraWaterSplash;
+
+    FTimerHandle DestroyEffectTimerHandle;
+
+    void DestroyEffect();
 
 };

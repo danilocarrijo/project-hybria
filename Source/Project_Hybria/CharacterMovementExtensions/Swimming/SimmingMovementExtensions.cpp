@@ -5,6 +5,9 @@
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Components/CapsuleComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
+#include "NiagaraComponent.h"
 
 void USimmingMovementExtensions::Tick(AProject_HybriaCharacter *Character)
 {
@@ -42,7 +45,35 @@ void USimmingMovementExtensions::StartSwimming(AProject_HybriaCharacter *Charact
 
     FVector Location = FVector(Character->GetActorLocation().X, Character->GetActorLocation().Y, Character->GetActorLocation().Z - HalfHeight + ZCorrection);
     FLatentActionInfo Looll;
+
 	Looll.CallbackTarget = this;    
+    if (WaterSplashEffect)
+    {
+        NiagaraWaterSplash = UNiagaraFunctionLibrary::SpawnSystemAttached(WaterSplashEffect, Character->GetRootComponent(), NAME_None, FVector(0.f), FRotator(0.f), EAttachLocation::Type::KeepRelativeOffset, true);
+
+        Character->GetWorldTimerManager().SetTimer(DestroyEffectTimerHandle, this, &USimmingMovementExtensions::DestroyEffect, 3.0f, false);
+    }
 
     UKismetSystemLibrary::MoveComponentTo(Character->GetCapsuleComponent(), Location, Character->GetActorRotation(), false, false, 0.1, false, EMoveComponentAction::Move, Looll);
+
+    if (WaterRippleEffect)
+    {
+        NiagaraComp = UNiagaraFunctionLibrary::SpawnSystemAttached(WaterRippleEffect, Character->GetRootComponent(), NAME_None, FVector(0.f), FRotator(0.f), EAttachLocation::Type::KeepRelativeOffset, true);
+    }
+}
+
+void USimmingMovementExtensions::DestroyEffect()
+{
+  if (NiagaraWaterSplash)
+    {
+        NiagaraWaterSplash->DestroyComponent();
+    }  
+}
+
+void USimmingMovementExtensions::StotSwimming()
+{
+  if (NiagaraComp)
+    {
+        NiagaraComp->DestroyComponent();
+    }  
 }

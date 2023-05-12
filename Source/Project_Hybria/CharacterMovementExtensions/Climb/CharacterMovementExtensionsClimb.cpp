@@ -18,19 +18,19 @@ UCharacterMovementExtensionsClimb::UCharacterMovementExtensionsClimb()
 {
 }
 
-void UCharacterMovementExtensionsClimb::Tick(AProject_HybriaCharacter *Character)
+bool UCharacterMovementExtensionsClimb::Tick(AProject_HybriaCharacter *Character)
 {
 
     if (!IsValid(ClimbMontage))
     {
         UE_LOG(LogTemp, Error, TEXT("UCharacterMovementExtensionsClimb::Tick::ClimbMontage is not valid"));
-        return;
+        return false;
     }
 
     if (!IsValid(Character))
     {
         UE_LOG(LogTemp, Error, TEXT("UCharacterMovementExtensionsClimb::Tick::Character is not valid"));
-        return;
+        return false;
     }
 
     UCapsuleComponent *Capsule = Character->GetCapsuleComponent();
@@ -38,7 +38,7 @@ void UCharacterMovementExtensionsClimb::Tick(AProject_HybriaCharacter *Character
     if (!IsValid(Capsule))
     {
         UE_LOG(LogTemp, Error, TEXT("UCharacterMovementExtensionsClimb::Tick::Capsule is not valid"));
-        return;
+        return false;
     }
 
     UCharacterMovementComponent *MovementComponent = Cast<UCharacterMovementComponent>(Character->GetMovementComponent());
@@ -46,14 +46,14 @@ void UCharacterMovementExtensionsClimb::Tick(AProject_HybriaCharacter *Character
     if (!IsValid(MovementComponent))
     {
         UE_LOG(LogTemp, Error, TEXT("UCharacterMovementExtensionsClimb::Tick::MovementComponent is not valid"));
-        return;
+        return false;
     }
 
     USkeletalMeshComponent *SkeletalMeshComponent = Character->GetMesh();
     if (!IsValid(SkeletalMeshComponent))
     {
         UE_LOG(LogTemp, Error, TEXT("UCharacterMovementExtensionsClimb::Tick::SkeletalMeshComponent is not valid"));
-        return;
+        return false;
     }
 
     float HalfHeight = Capsule->GetScaledCapsuleHalfHeight();
@@ -99,7 +99,7 @@ void UCharacterMovementExtensionsClimb::Tick(AProject_HybriaCharacter *Character
             if (!IsValid(Mesh))
             {
                 UE_LOG(LogTemp, Error, TEXT("UCharacterMovementExtensionsClimb::Tick::Mesh is not valid"));
-                return;
+                return false;
             }
 
             auto AnimInstance = Mesh->GetAnimInstance();
@@ -107,15 +107,15 @@ void UCharacterMovementExtensionsClimb::Tick(AProject_HybriaCharacter *Character
             if (!IsValid(AnimInstance))
             {
                 UE_LOG(LogTemp, Error, TEXT("UCharacterMovementExtensionsClimb::Tick::AnimInstance is not valid"));
-                return;
+                return false;
             }
 
             AnimInstance->Montage_Play(ClimbMontage, 1.0f);
 
-            return;
+            return true;
         }
     }
-    return;
+    return false;
 }
 
 void UCharacterMovementExtensionsClimb::FinishClimbing()
@@ -154,7 +154,8 @@ void UCharacterMovementExtensionsClimb::FinishClimbing()
     Looll.ExecutionFunction = "JumbToFloor";
     Looll.Linkage = 0;
     Looll.UUID = GetNextUUID();
-    auto HangLocation = FVector(ActorComponent->GetActorLocation().X, ActorComponent->GetActorLocation().Y, EdgeHitResult.Location.Z + HangZOffset);
+    FVector Location = FVector(ActorComponent->GetActorLocation().X, ActorComponent->GetActorLocation().Y, EdgeHitResult.Location.Z + HangZOffset);
+    auto HangLocation = Location + ActorComponent->GetActorForwardVector() * HangHandOffset;
     UE_LOG(LogTemp, Display, TEXT("%d"), HangZOffset);
     UE_LOG(LogTemp, Display, TEXT("%d"), HangAnimRate);
     UKismetSystemLibrary::MoveComponentTo(CapsuleComponent, HangLocation, ActorComponent->GetActorRotation(), false, false, HangAnimRate, false, EMoveComponentAction::Move, Looll);
@@ -191,25 +192,41 @@ void UCharacterMovementExtensionsClimb::JumbToFloor()
     }
 
     AnimInstance->Montage_Resume(ClimbMontage);
-
-    float HalfHeight = CapsuleComponent->GetScaledCapsuleHalfHeight();
-
-    auto HangHandOffsetCorrection = HangHandOffset < 0 ? HangHandOffset * -1 : HangHandOffset;
-    auto ForwardVector = CapsuleComponent->GetForwardVector() * 10 * HangHandOffsetCorrection;
-    auto UpVector = CapsuleComponent->GetUpVector() * HalfHeight * 3;
-    FLatentActionInfo Looll;
-    Looll.CallbackTarget = this;
-    Looll.ExecutionFunction = "FreeMovement";
-    Looll.Linkage = 0;
-    Looll.UUID = GetNextUUID();
-    UKismetSystemLibrary::MoveComponentTo(CapsuleComponent, ForwardVector + UpVector + ActorComponent->GetActorLocation(), ActorComponent->GetActorRotation(), false, false, ClimbAnimRate, false, EMoveComponentAction::Move, Looll);
-
 }
 
 void UCharacterMovementExtensionsClimb::FreeMovement()
 {
     if (!IsValid(ActorComponent))
-        return;   
+        return; 
+
+    UCapsuleComponent *Capsule = ActorComponent->GetCapsuleComponent();
+
+    if (!IsValid(Capsule))
+    {
+        UE_LOG(LogTemp, Error, TEXT("JumbToFloor::Tick::Capsule is not valid"));
+        return;
+    }
+
+    float HalfHeight = Capsule->GetScaledCapsuleHalfHeight();
+
+    FVector Location = FVector(ActorComponent->GetActorLocation().X, ActorComponent->GetActorLocation().Y, EdgeHitResult.Location.Z + HalfHeight);
+
+    Location += ActorComponent->GetActorForwardVector() * 30;
+
+
+    //ActorComponent->SetActorLocation(Location);
+    FLatentActionInfo Looll;
+    Looll.CallbackTarget = this;
+    Looll.ExecutionFunction = "SetCanWalkAndFinish";
+    Looll.Linkage = 0;
+    Looll.UUID = GetNextUUID();
+    UKismetSystemLibrary::MoveComponentTo(CapsuleComponent, Location, ActorComponent->GetActorRotation(), true, true, 0.3, false, EMoveComponentAction::Move, Looll);
+/**/
+}
+
+
+void UCharacterMovementExtensionsClimb::SetCanWalkAndFinish()
+{
     ActorComponent->SetCanMoveAndState(false, ECharacterMovement::Walk);
     UCharacterMovementComponent *MovementComponent = Cast<UCharacterMovementComponent>(ActorComponent->GetMovementComponent());
     MovementComponent->SetMovementMode(EMovementMode::MOVE_Walking);
