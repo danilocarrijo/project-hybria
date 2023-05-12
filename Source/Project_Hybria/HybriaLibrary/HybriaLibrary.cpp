@@ -1,4 +1,4 @@
-#include "SphereTraceByChannel.h"
+#include "HybriaLibrary.h"
 #include "Components/ShapeComponent.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/World.h"
@@ -11,7 +11,7 @@
 #include "Components/PrimitiveComponent.h"
 
 
-bool SphereTraceByChannel::Trace(AActor* Actor, UWorld* Word, FVector Start, FVector End, float Radius, ECollisionChannel TraceChannel, FHitResult& HitResult, bool bDebug)
+bool UHybriaLibrary::SphereTraceByChannel(AActor* Actor, UWorld* Word, FVector Start, FVector End, float Radius, ECollisionChannel TraceChannel, FHitResult& HitResult, bool bDebug)
 {
     FCollisionQueryParams TraceParams(FName(TEXT("SphereTrace")), true, Actor);
     TraceParams.bTraceComplex = true;

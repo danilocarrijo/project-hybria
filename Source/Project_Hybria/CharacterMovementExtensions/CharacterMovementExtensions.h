@@ -13,6 +13,7 @@ private:
     class UCharacterMovementExtensionsClimb* ClimbExtensions;
     class UCharacterMovementExtensionsEdgeJump* EdgeJumpExtensions;
     class UCharacterMovementExtensionsLadde* LadderClimbingExtensions;
+    class USimmingMovementExtensions* SimmingMovementExtensions;
 
 	void MoveForwardWalk(float Value);
 
@@ -61,6 +62,15 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ladder Climb Movement")
         class UAnimMontage* EdgeJumpingClimbMontage;
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Swim Movement")
+        float WaterSurfaceZCorrection;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Swim Movement")
+        class UNiagaraSystem* WaterRippleEffect;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Swim Movement")
+        class UNiagaraSystem* WaterSplashEffect;
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -106,4 +116,7 @@ public:
 
     UFUNCTION(BlueprintCallable)
 	float GetClimbingLadderDirection();
+
+    UFUNCTION(BlueprintCallable)
+    void EdgeClimbingFreeMovement();
 };

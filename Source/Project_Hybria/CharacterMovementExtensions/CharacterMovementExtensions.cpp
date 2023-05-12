@@ -6,6 +6,7 @@
 #include "Engine/Engine.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "../Ladder.h"
+#include "Swimming/SimmingMovementExtensions.h"
 
 UCharacterMovementExtensions::UCharacterMovementExtensions()
 {
@@ -24,7 +25,15 @@ void UCharacterMovementExtensions::BeginPlay()
 
     LadderClimbingExtensions = NewObject<UCharacterMovementExtensionsLadde>();
 
-    LadderClimbingExtensions->LadderClimbSpeed = LadderClimbSpeed;    
+    SimmingMovementExtensions = NewObject<USimmingMovementExtensions>();
+
+    SimmingMovementExtensions->ZCorrection = WaterSurfaceZCorrection;
+
+    SimmingMovementExtensions->WaterRippleEffect  = WaterRippleEffect;
+
+    SimmingMovementExtensions->WaterSplashEffect  = WaterSplashEffect;
+
+    LadderClimbingExtensions->LadderClimbSpeed = LadderClimbSpeed;
     
     LadderClimbingExtensions->SetLadderProperties(HandOffSet, BottomDistanceToDrop, TopDistanceToClimb, EdgeJumpingClimbMontage);
 
@@ -48,11 +57,29 @@ void UCharacterMovementExtensions::TickComponent(float DeltaTime, ELevelTick Tic
     if (!IsValid(Character))
         return;
 
+    bool bHitWaterSurface = false;
+    bool bHitWall = false;
+
     switch (CurrMovement)
     {
         case ECharacterMovement::Walk:
-            ClimbExtensions->Tick(Character);
-            EdgeJumpExtensions->Tick(Character);
+            bHitWaterSurface = SimmingMovementExtensions->CheckForWaterSurface(Character);
+            if(!bHitWaterSurface)
+            {
+                ClimbExtensions->Tick(Character);
+                EdgeJumpExtensions->Tick(Character);
+                
+            } else {
+                CurrMovement = ECharacterMovement::Swimming;
+                SimmingMovementExtensions->StartSwimming(Character);
+            }
+            break;
+        case ECharacterMovement::Swimming:
+            bHitWall = ClimbExtensions->Tick(Character);
+            if(bHitWall)
+            {
+                SimmingMovementExtensions->StotSwimming();
+            }
             break;
         default:
             break;
@@ -128,6 +155,9 @@ void UCharacterMovementExtensions::MoveForward(float Value)
         case ECharacterMovement::Walk:
             MoveForwardWalk(Value);
             break;
+        case ECharacterMovement::Swimming:
+            MoveForwardWalk(Value);
+            break;
         case ECharacterMovement::LadderClibing:
             MoveForwardLadder(Value);
             break;
@@ -141,6 +171,9 @@ void UCharacterMovementExtensions::MoveRight(float Value)
     switch (CurrMovement)
     {
         case ECharacterMovement::Walk:
+            MoveRightWalk(Value);
+            break;
+        case ECharacterMovement::Swimming:
             MoveRightWalk(Value);
             break;
         default:
@@ -189,5 +222,12 @@ void UCharacterMovementExtensions::MoveRightWalk(float Value)
 		// add movement in that direction
 		Character->AddMovementInput(Direction, Value);
 	}
+}
+
+void UCharacterMovementExtensions::EdgeClimbingFreeMovement()
+{
+	if(!IsValid(ClimbExtensions)) return;
+
+	ClimbExtensions->FreeMovement();
 }
 

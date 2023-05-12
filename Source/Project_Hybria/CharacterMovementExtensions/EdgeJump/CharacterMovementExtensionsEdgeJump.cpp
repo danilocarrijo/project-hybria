@@ -1,6 +1,6 @@
 #include "CharacterMovementExtensionsEdgeJump.h"
 #include "../../Project_HybriaCharacter.h"
-#include "../../Helpers/SphereTraceByChannel.h"
+#include "../../HybriaLibrary/HybriaLibrary.h"
 #include "Components/CapsuleComponent.h"
 
 void UCharacterMovementExtensionsEdgeJump::Tick(AProject_HybriaCharacter *Character)
@@ -15,7 +15,7 @@ void UCharacterMovementExtensionsEdgeJump::Tick(AProject_HybriaCharacter *Charac
     FHitResult Hit;
 
 
-    bool bHit = SphereTraceByChannel::Trace(Character, Character->GetWorld(), Start, End, 10.0f, ECollisionChannel::ECC_WorldStatic, Hit, bDebug);
+    bool bHit = UHybriaLibrary::SphereTraceByChannel(Character, Character->GetWorld(), Start, End, 10.0f, ECollisionChannel::ECC_WorldStatic, Hit, bDebug);
 
     if (!bHit)
     {

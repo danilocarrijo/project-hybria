@@ -68,7 +68,16 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UCharacterMovementExtensions* CharacterMovementExtensionsHandler;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	class UHealthSystem* HealthSystem;
+
 	void SetCanMoveAndState(bool bCanMove, ECharacterMovement Movement);
+
+    UPROPERTY(EditAnywhere)
+    TSubclassOf<class UUserWidget> PlayerWidget;
+
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
 private:
 
@@ -76,6 +85,8 @@ private:
 		float TraceDistance = 50;
 
 	bool bIsGrounded = false;
+
+	class UPlayerMain* PlayerMainInstance;
 
 };
 

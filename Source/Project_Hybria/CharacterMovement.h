@@ -5,5 +5,6 @@ enum class ECharacterMovement : uint8
 {
     Walk UMETA(DisplayName = "Walk"),
     Clibing UMETA(DisplayName = "Clibing"),
-    LadderClibing UMETA(DisplayName = "Ladder Clibing")
+    LadderClibing UMETA(DisplayName = "Ladder Clibing"),
+    Swimming UMETA(DisplayName = "Swimming")
 };
