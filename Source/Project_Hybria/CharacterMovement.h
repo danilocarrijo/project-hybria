@@ -4,7 +4,8 @@ UENUM(BlueprintType) // Essa linha torna a enumeração disponível para ser usa
 enum class ECharacterMovement : uint8
 {
     Walk UMETA(DisplayName = "Walk"),
-    Clibing UMETA(DisplayName = "Clibing"),
-    LadderClibing UMETA(DisplayName = "Ladder Clibing"),
-    Swimming UMETA(DisplayName = "Swimming")
+    Climbing UMETA(DisplayName = "Clibing"),
+    LadderClimbing UMETA(DisplayName = "Ladder Clibing"),
+    Swimming UMETA(DisplayName = "Swimming"),
+    Diving UMETA(DisplayName = "Diving")
 };

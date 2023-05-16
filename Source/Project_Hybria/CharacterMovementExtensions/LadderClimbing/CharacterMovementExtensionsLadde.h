@@ -6,12 +6,14 @@
 #include "CharacterMovementExtensionsLadde.generated.h"
 
 UCLASS()
-class UCharacterMovementExtensionsLadde : public UObject
+class PROJECT_HYBRIA_API UCharacterMovementExtensionsLadde : public UObject
 {
     GENERATED_BODY()
-private:
 
 public:
+	
+	UCharacterMovementExtensionsLadde() {}
+	
 	void Climb(float Value, class AProject_HybriaCharacter *Character);
 
 	float LadderClimbSpeed;
@@ -20,13 +22,13 @@ public:
 
     void StartClimbingLadder(class AProject_HybriaCharacter *Character, class ALadder *Ladder, float ZCorrection);
 
-	float GetDirection();
+	float GetDirection() const;
 
     void SetLadderProperties(float OffSet, float BottomDistanceToDrop, float TopDistanceToClimb, class UAnimMontage* EdgeJumpingClimbMontage);
 
 	bool DropBottom(class AProject_HybriaCharacter *Character);
 
-	bool ClimbUp(AProject_HybriaCharacter *Character);
+	bool ClimbUp(const AProject_HybriaCharacter *Character) const;
 
     UFUNCTION(BlueprintCallable)
     void FreeMovement();
@@ -46,14 +48,16 @@ protected:
 
 	float TopDistanceToClimb;
 
-	float GetBottomDistance(class AProject_HybriaCharacter *Character);
+	float GetBottomDistance(const class AProject_HybriaCharacter *Character) const;
 
-	float GetTopDistance(class AProject_HybriaCharacter *Character);
+	float GetTopDistance(const class AProject_HybriaCharacter *Character) const;
 
-	void FinishClimbUp(class AProject_HybriaCharacter *Character);
+	void FinishClimbUp(const class AProject_HybriaCharacter *Character) const;
 
+	UPROPERTY()
 	class UAnimMontage* EdgeJumpingClimbMontage;
 
+	UPROPERTY()
     class AProject_HybriaCharacter *ActorComponent;
 
 	bool bCanClimb = true;

@@ -4,9 +4,10 @@
 #include "LadderClimbing/CharacterMovementExtensionsLadde.h"
 #include "../Project_HybriaCharacter.h"
 #include "Engine/Engine.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "../Ladder.h"
-#include "Swimming/SimmingMovementExtensions.h"
+#include "Swimming/SwimmingMovementExtensions.h"
+#include "Diving/DivingMovementExtensions.h"
+#include "Templates/SharedPointer.h"
 
 UCharacterMovementExtensions::UCharacterMovementExtensions()
 {
@@ -21,25 +22,43 @@ void UCharacterMovementExtensions::BeginPlay()
 {
 	Super::BeginPlay();
 
-    Character = Cast<AProject_HybriaCharacter>(GetOwner());
-
+	Character = Cast<AProject_HybriaCharacter>(GetOwner());
+	
     LadderClimbingExtensions = NewObject<UCharacterMovementExtensionsLadde>();
 
-    SimmingMovementExtensions = NewObject<USimmingMovementExtensions>();
+    SwimmingMovementExtensions = NewObject<USwimmingMovementExtensions>();
 
-    SimmingMovementExtensions->ZCorrection = WaterSurfaceZCorrection;
+	DivingMovementExtensions = NewObject<UDivingMovementExtensions>();
 
-    SimmingMovementExtensions->WaterRippleEffect  = WaterRippleEffect;
+	EdgeJumpExtensions = NewObject<UCharacterMovementExtensionsEdgeJump>();
 
-    SimmingMovementExtensions->WaterSplashEffect  = WaterSplashEffect;
+	ClimbExtensions = NewObject<UCharacterMovementExtensionsClimb>();
 
-    LadderClimbingExtensions->LadderClimbSpeed = LadderClimbSpeed;
+	DivingMovementExtensions->DiveSpeed = DiveSpeed;
+
+	DivingMovementExtensions->DiveBottomHitTolerance = DiveBottomHitTolerance;
+
+	DivingMovementExtensions->DiveTopHitTolerance = DiveTopHitTolerance;
+    
+	DivingMovementExtensions->MaxBreath =  MaxBreath;
+    
+	DivingMovementExtensions->BreathCircleColor =  BreathCircleColor;
+    
+	DivingMovementExtensions->BreathCircleColorDanger =  BreathCircleColorDanger;
+    
+	DivingMovementExtensions->DangerZoneBreathPercentage =  DangerZoneBreathPercentage;
+    
+	DivingMovementExtensions->UnderwaterTimeCount =  UnderwaterTimeCount;
+	
+    SwimmingMovementExtensions->ZCorrection = WaterSurfaceZCorrection;
+
+    SwimmingMovementExtensions->WaterRippleEffect  = WaterRippleEffect;
+
+    SwimmingMovementExtensions->WaterSplashEffect  = WaterSplashEffect;
+
+	LadderClimbingExtensions->LadderClimbSpeed = LadderClimbSpeed;
     
     LadderClimbingExtensions->SetLadderProperties(HandOffSet, BottomDistanceToDrop, TopDistanceToClimb, EdgeJumpingClimbMontage);
-
-    EdgeJumpExtensions = NewObject<UCharacterMovementExtensionsEdgeJump>();
-
-    ClimbExtensions = NewObject<UCharacterMovementExtensionsClimb>();
     CurrMovement = ECharacterMovement::Walk;
     
     ClimbExtensions->HangAnimRate = HangAnimRate;
@@ -57,13 +76,14 @@ void UCharacterMovementExtensions::TickComponent(float DeltaTime, ELevelTick Tic
     if (!IsValid(Character))
         return;
 
-    bool bHitWaterSurface = false;
-    bool bHitWall = false;
+
+    bool bHitWaterSurface;
+    bool bHitWall;
 
     switch (CurrMovement)
     {
         case ECharacterMovement::Walk:
-            bHitWaterSurface = SimmingMovementExtensions->CheckForWaterSurface(Character);
+            bHitWaterSurface = SwimmingMovementExtensions->CheckForWaterSurface(Character);
             if(!bHitWaterSurface)
             {
                 ClimbExtensions->Tick(Character);
@@ -71,16 +91,19 @@ void UCharacterMovementExtensions::TickComponent(float DeltaTime, ELevelTick Tic
                 
             } else {
                 CurrMovement = ECharacterMovement::Swimming;
-                SimmingMovementExtensions->StartSwimming(Character);
+                SwimmingMovementExtensions->StartSwimming(Character);
             }
             break;
         case ECharacterMovement::Swimming:
             bHitWall = ClimbExtensions->Tick(Character);
             if(bHitWall)
             {
-                SimmingMovementExtensions->StotSwimming();
+                SwimmingMovementExtensions->StopSwimming();
             }
             break;
+    case ECharacterMovement::Diving:
+    	DivingMovementExtensions->Tick(DeltaTime, Character);
+    	break;
         default:
             break;
     }
@@ -88,7 +111,7 @@ void UCharacterMovementExtensions::TickComponent(float DeltaTime, ELevelTick Tic
 
 void UCharacterMovementExtensions::ClimbLadderUp()
 {
-    if(CurrMovement == ECharacterMovement::LadderClibing)
+    if(CurrMovement == ECharacterMovement::LadderClimbing)
 	{
 		MoveForward(1);
 	}
@@ -96,7 +119,7 @@ void UCharacterMovementExtensions::ClimbLadderUp()
 
 void UCharacterMovementExtensions::ClimbLadderDown()
 {
-    if(CurrMovement == ECharacterMovement::LadderClibing)
+    if(CurrMovement == ECharacterMovement::LadderClimbing)
 	{
 		MoveForward(-1);
 	}
@@ -108,10 +131,10 @@ void UCharacterMovementExtensions::OnStairCollision(AActor* OtherActor)
 
 	if(!IsValid(LadderClimbingExtensions)) return;
 
-    CurrMovement = ECharacterMovement::LadderClibing;
-    bLockMoviment = true;
+    CurrMovement = ECharacterMovement::LadderClimbing;
+    bLockMovement = true;
 
-    LadderClimbingExtensions->StartClimbingLadder(Character, LadderActor, ZCorrection);
+    LadderClimbingExtensions->StartClimbingLadder(Cast<AProject_HybriaCharacter>(Character), LadderActor, ZCorrection);
 
 }
 
@@ -126,18 +149,18 @@ void UCharacterMovementExtensions::FinishLadderClimbing()
 {
 	if(!IsValid(LadderClimbingExtensions)) return;
 
-	LadderClimbingExtensions->FinishLadderClimbing(Character);
+	LadderClimbingExtensions->FinishLadderClimbing(Cast<AProject_HybriaCharacter>(Character));
 }
 
 void UCharacterMovementExtensions::ChangeState(bool inbLockMoviment, ECharacterMovement Movement)
 {
-	bLockMoviment = inbLockMoviment;
+	bLockMovement = inbLockMoviment;
 	CurrMovement = Movement;
 }
 
 void UCharacterMovementExtensions::StopClimbLadder()
 {
-	if(CurrMovement == ECharacterMovement::LadderClibing)
+	if(CurrMovement == ECharacterMovement::LadderClimbing)
 	{
     	LadderClimbingExtensions->StopClimbingLadder();
 	}
@@ -145,7 +168,7 @@ void UCharacterMovementExtensions::StopClimbLadder()
 
 void UCharacterMovementExtensions::Jump()
 {
-    Character->Jump();
+    Cast<AProject_HybriaCharacter>(Character)->Jump();
 }
 
 void UCharacterMovementExtensions::MoveForward(float Value)
@@ -158,7 +181,7 @@ void UCharacterMovementExtensions::MoveForward(float Value)
         case ECharacterMovement::Swimming:
             MoveForwardWalk(Value);
             break;
-        case ECharacterMovement::LadderClibing:
+        case ECharacterMovement::LadderClimbing:
             MoveForwardLadder(Value);
             break;
         default:
@@ -181,17 +204,17 @@ void UCharacterMovementExtensions::MoveRight(float Value)
     }
 }
 
-void UCharacterMovementExtensions::MoveForwardWalk(float Value)
+void UCharacterMovementExtensions::MoveForwardWalk(const float Value) const
 {
-	if (!bLockMoviment && (Character->Controller != nullptr) && (Value != 0.0f))
+	if (!bLockMovement && (Cast<AProject_HybriaCharacter>(Character)->Controller != nullptr) && (Value != 0.0f))
 	{
 		// find out which way is forward
-		const FRotator Rotation = Character->Controller->GetControlRotation();
+		const FRotator Rotation = Cast<AProject_HybriaCharacter>(Character)->Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 
 		// get forward vector
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		Character->AddMovementInput(Direction, Value);
+		Cast<AProject_HybriaCharacter>(Character)->AddMovementInput(Direction, Value);
 	}
 }
 
@@ -199,7 +222,7 @@ void UCharacterMovementExtensions::MoveForwardLadder(float Value)
 {
 	if(!IsValid(LadderClimbingExtensions)) return;
         
-    LadderClimbingExtensions->Climb(Value, Character);
+    LadderClimbingExtensions->Climb(Value, Cast<AProject_HybriaCharacter>(Character));
 }
 
 float UCharacterMovementExtensions::GetClimbingLadderDirection()
@@ -209,9 +232,9 @@ float UCharacterMovementExtensions::GetClimbingLadderDirection()
     return LadderClimbingExtensions->GetDirection();
 }
 
-void UCharacterMovementExtensions::MoveRightWalk(float Value)
+void UCharacterMovementExtensions::MoveRightWalk(float Value) const
 {
-	if (!bLockMoviment && (Character->Controller != nullptr) && (Value != 0.0f))
+	if (!bLockMovement && (Character->Controller != nullptr) && (Value != 0.0f))
 	{
 		// find out which way is right
 		const FRotator Rotation = Character->Controller->GetControlRotation();
@@ -229,5 +252,48 @@ void UCharacterMovementExtensions::EdgeClimbingFreeMovement()
 	if(!IsValid(ClimbExtensions)) return;
 
 	ClimbExtensions->FreeMovement();
+}
+
+void UCharacterMovementExtensions::StartDiving()
+{
+	if(!IsValid(DivingMovementExtensions)) return;
+
+	if(!IsValid(SwimmingMovementExtensions)) return;
+
+	CurrMovement = ECharacterMovement::Diving;
+
+	SwimmingMovementExtensions->StopSwimming();
+
+	DivingMovementExtensions->StartDiving(Cast<AProject_HybriaCharacter>(Character));
+}
+
+void UCharacterMovementExtensions::StopDiving()
+{
+	if(!IsValid(DivingMovementExtensions)) return;
+
+	DivingMovementExtensions->StopDiving(Cast<AProject_HybriaCharacter>(Character));
+}
+
+int UCharacterMovementExtensions::GetDivingDirection() const
+{
+	if(!IsValid(DivingMovementExtensions)) return 0;
+
+	return DivingMovementExtensions->GetDivingDirection();
+}
+
+float UCharacterMovementExtensions::GetCurrBreath() const
+{
+	if(!IsValid(DivingMovementExtensions)) return 0;
+
+	return DivingMovementExtensions->GetCurrBreath();
+}
+
+void UCharacterMovementExtensions::GoToSurface()
+{
+	if(!IsValid(SwimmingMovementExtensions)) return;
+
+	CurrMovement = ECharacterMovement::Swimming;
+
+	return SwimmingMovementExtensions->GoToSurface(Character);
 }
 

@@ -8,8 +8,6 @@
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Engine/World.h"
-#include "Kismet/KismetMathLibrary.h"
-#include "Kismet/KismetSystemLibrary.h"
 #include "GameFramework/Character.h"
 #include "CharacterMovementExtensions/CharacterMovementExtensions.h"
 #include "Engine/GameViewportClient.h"
@@ -36,6 +34,7 @@ void AProject_HybriaCharacter::BeginPlay()
 		if (IsValid(PlayerMain))
 		{
 			PlayerMainInstance = PlayerMain;
+			PlayerMainInstance->Character = this;
 			HealthSystem->InitUI(PlayerMainInstance);
 		}
 	}
@@ -122,7 +121,7 @@ void AProject_HybriaCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVect
 {
 	if (!IsValid(CharacterMovementExtensionsHandler)) return;
 
-	if (!CharacterMovementExtensionsHandler->bLockMoviment)
+	if (!CharacterMovementExtensionsHandler->bLockMovement)
 		Jump();
 }
 
@@ -136,7 +135,7 @@ void AProject_HybriaCharacter::TurnAtRate(float Rate)
 	if (!IsValid(CharacterMovementExtensionsHandler)) return;
 	// calculate delta for this frame from the rate information
 
-	if (!CharacterMovementExtensionsHandler->bLockMoviment)
+	if (!CharacterMovementExtensionsHandler->bLockMovement)
 		AddControllerYawInput(Rate * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
 }
 
@@ -145,7 +144,7 @@ void AProject_HybriaCharacter::LookUpAtRate(float Rate)
 	if (!IsValid(CharacterMovementExtensionsHandler)) return;
 	// calculate delta for this frame from the rate information
 
-	if (!CharacterMovementExtensionsHandler->bLockMoviment)
+	if (!CharacterMovementExtensionsHandler->bLockMovement)
 		AddControllerPitchInput(Rate * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
 }
 
@@ -166,4 +165,11 @@ float AProject_HybriaCharacter::TakeDamage(float DamageAmount, FDamageEvent cons
 	}
 
 	return Damage;
+}
+
+void AProject_HybriaCharacter::GoToSurface() const
+{
+	if (!IsValid(CharacterMovementExtensionsHandler)) return;
+
+	CharacterMovementExtensionsHandler->GoToSurface();
 }

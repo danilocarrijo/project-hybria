@@ -28,4 +28,7 @@ public:
 
     UPROPERTY(EditAnywhere)
     TSubclassOf<class UUserWidget> HeartWidget;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	class AProject_HybriaCharacter *Character;
 };

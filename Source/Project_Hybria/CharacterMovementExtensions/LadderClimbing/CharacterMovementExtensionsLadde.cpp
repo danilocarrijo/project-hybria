@@ -11,21 +11,21 @@
 
 bool UCharacterMovementExtensionsLadde::DropBottom(AProject_HybriaCharacter *Character)
 {
-    float Distance = GetBottomDistance(Character);
+    const float Distance = GetBottomDistance(Character);
 
     return Distance < BottomDistanceToDrop;
 }
 
-bool UCharacterMovementExtensionsLadde::ClimbUp(AProject_HybriaCharacter *Character)
+bool UCharacterMovementExtensionsLadde::ClimbUp(const AProject_HybriaCharacter *Character) const
 {
-    float Distance = GetTopDistance(Character);
+    const float Distance = GetTopDistance(Character);
 
     return Distance < TopDistanceToClimb;
 }
 
-float UCharacterMovementExtensionsLadde::GetBottomDistance(AProject_HybriaCharacter *Character)
+float UCharacterMovementExtensionsLadde::GetBottomDistance(const AProject_HybriaCharacter *Character) const
 {
-    FVector ActorLocation = Character->GetCapsuleComponent()->GetComponentLocation();
+    const FVector ActorLocation = Character->GetCapsuleComponent()->GetComponentLocation();
 
     float Distance = ActorLocation.Z - LadderBottom.Z;
     Distance = FMath::Abs(Distance);
@@ -33,9 +33,9 @@ float UCharacterMovementExtensionsLadde::GetBottomDistance(AProject_HybriaCharac
     return Distance;
 }
 
-float UCharacterMovementExtensionsLadde::GetTopDistance(AProject_HybriaCharacter *Character)
+float UCharacterMovementExtensionsLadde::GetTopDistance(const AProject_HybriaCharacter *Character) const
 {
-    FVector ActorLocation = Character->GetCapsuleComponent()->GetComponentLocation();
+    const FVector ActorLocation = Character->GetCapsuleComponent()->GetComponentLocation();
 
     float Distance = ActorLocation.Z - LadderTop.Z;
     Distance = FMath::Abs(Distance);
@@ -45,12 +45,12 @@ float UCharacterMovementExtensionsLadde::GetTopDistance(AProject_HybriaCharacter
     return Distance;
 }
 
-void UCharacterMovementExtensionsLadde::Climb(float Value, AProject_HybriaCharacter *Character)
+void UCharacterMovementExtensionsLadde::Climb(const float Value, AProject_HybriaCharacter *Character)
 {
     if (!bCanClimb) return;
 
-    auto bDrop = DropBottom(Character);
-    auto bClimbUp = ClimbUp(Character);
+    const auto bDrop = DropBottom(Character);
+    const auto bClimbUp = ClimbUp(Character);
 
     //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("A distância entre os pontos é %d"), bDrop));
 
@@ -74,11 +74,11 @@ void UCharacterMovementExtensionsLadde::Climb(float Value, AProject_HybriaCharac
     Direction = Value;
 
     const FVector UpVector = FVector(0.0f, 0.0f, 1.0f * Value * LadderClimbSpeed);
-    // Adiciona a força do vetor de direção calculado para subir as escadas ou para baixo, dependendo do valor de entrada
+
     const FVector NewLocation = Character->GetActorLocation() + UpVector;
-    // Move o componente de movimento do personagem para a nova posição
+
     Character->GetCharacterMovement()->MoveUpdatedComponent(UpVector, Character->GetActorRotation(), true);
-    // Define a nova posição do personagem
+    
     Character->SetActorLocation(NewLocation);
 }
 
@@ -87,14 +87,14 @@ void UCharacterMovementExtensionsLadde::StopClimbingLadder()
     Direction = 0;
 }
 
-void UCharacterMovementExtensionsLadde::FinishClimbUp(AProject_HybriaCharacter *Character)
+void UCharacterMovementExtensionsLadde::FinishClimbUp(const AProject_HybriaCharacter *Character) const
 {
-   auto Mesh = Character->GetMesh();
+    const auto Mesh = Character->GetMesh();
                 
     if (!IsValid(Mesh))
         return;
 
-    auto AnimInstance = Mesh->GetAnimInstance();
+    const auto AnimInstance = Mesh->GetAnimInstance();
 
     if (!IsValid(AnimInstance))
         return;
@@ -107,17 +107,17 @@ void UCharacterMovementExtensionsLadde::FinishLadderClimbing(AProject_HybriaChar
     if (!IsValid(Character))
         return;
 
-    auto CapsuleComponent = Character->GetCapsuleComponent();
+    const auto CapsuleComponent = Character->GetCapsuleComponent();
 
     if (!IsValid(CapsuleComponent))
         return;
 
-    float HalfHeight = CapsuleComponent->GetScaledCapsuleHalfHeight();
+    const float HalfHeight = CapsuleComponent->GetScaledCapsuleHalfHeight();
 
     ActorComponent = Character;
 
-    auto ForwardVector = CapsuleComponent->GetForwardVector() * 100;
-    auto UpVector = CapsuleComponent->GetUpVector() * HalfHeight * 2;
+    const auto ForwardVector = CapsuleComponent->GetForwardVector() * 100;
+    const auto UpVector = CapsuleComponent->GetUpVector() * HalfHeight * 2;
     FLatentActionInfo Looll;
     Looll.CallbackTarget = this;
     Looll.ExecutionFunction = "FreeMovement";
@@ -135,12 +135,12 @@ void UCharacterMovementExtensionsLadde::FreeMovement()
     bCanClimb = true;
 }
 
-float UCharacterMovementExtensionsLadde::GetDirection()
+float UCharacterMovementExtensionsLadde::GetDirection() const
 {
     return Direction;
 }
 
-void UCharacterMovementExtensionsLadde::StartClimbingLadder(AProject_HybriaCharacter *Character, ALadder *Ladder, float ZCorrection)
+void UCharacterMovementExtensionsLadde::StartClimbingLadder(AProject_HybriaCharacter *Character, ALadder *Ladder, const float ZCorrection)
 {
 	if(!IsValid(Character)) return;
 

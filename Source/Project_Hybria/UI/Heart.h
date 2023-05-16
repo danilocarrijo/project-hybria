@@ -20,12 +20,6 @@ public:
 	virtual void NativeConstruct() override;
 
 	void SetValue(float Value);
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget))
-    class UImage* Heart;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget))
-    class USizeBox* SizeBox;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UMaterialInstanceDynamic* Material;

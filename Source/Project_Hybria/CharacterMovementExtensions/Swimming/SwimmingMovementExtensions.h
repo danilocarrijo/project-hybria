@@ -1,36 +1,46 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SimmingMovementExtensions.generated.h"
+#include "SwimmingMovementExtensions.generated.h"
 
 UCLASS()
-class USimmingMovementExtensions : public UObject
+class PROJECT_HYBRIA_API USwimmingMovementExtensions : public UObject
 {
     GENERATED_BODY()
 private:
 
 public:
+    USwimmingMovementExtensions();
+    
     void Tick(class AProject_HybriaCharacter *Character);
 
     float ZCorrection;
 
     bool CheckForWaterSurface(class AProject_HybriaCharacter *Character);
 
-    void StartSwimming(class AProject_HybriaCharacter *Character);
+    void StartSwimming( class AProject_HybriaCharacter *Character);
 
-    void StotSwimming();
+    void StopSwimming();
 
+    void GoToSurface(class AProject_HybriaCharacter *Character);
+
+    UPROPERTY()
     class UNiagaraSystem* WaterRippleEffect;
 
+    UPROPERTY()
     class UNiagaraSystem* WaterSplashEffect;
 
 protected:
+    UPROPERTY()
     class UNiagaraComponent* NiagaraComp;
 
+    UPROPERTY()
     class UNiagaraComponent* NiagaraWaterSplash;
 
     FTimerHandle DestroyEffectTimerHandle;
 
-    void DestroyEffect();
+    void DestroyEffect() const;
+
+    float HitZLocation;
 
 };

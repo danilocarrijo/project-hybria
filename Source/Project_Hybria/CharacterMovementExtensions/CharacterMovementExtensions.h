@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "../CharacterMovement.h"
-#include "Climb/CharacterMovementExtensionsClimb.h"
 #include "CharacterMovementExtensions.generated.h"
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -10,14 +9,27 @@ class PROJECT_HYBRIA_API UCharacterMovementExtensions: public UActorComponent
 {
     GENERATED_BODY()
 private:
-    class UCharacterMovementExtensionsClimb* ClimbExtensions;
+    UPROPERTY()
+    class UCharacterMovementExtensionsClimb* ClimbExtensions;    
+    
+    UPROPERTY()
     class UCharacterMovementExtensionsEdgeJump* EdgeJumpExtensions;
+    
+    UPROPERTY()
     class UCharacterMovementExtensionsLadde* LadderClimbingExtensions;
-    class USimmingMovementExtensions* SimmingMovementExtensions;
+    
+    UPROPERTY()
+    class USwimmingMovementExtensions* SwimmingMovementExtensions;
+    
+    UPROPERTY()
+    class UDivingMovementExtensions* DivingMovementExtensions;
 
-	void MoveForwardWalk(float Value);
+    UPROPERTY()
+    class AProject_HybriaCharacter* Character;
 
-	void MoveRightWalk(float Value);
+	void MoveForwardWalk(float Value) const;
+
+	void MoveRightWalk(float Value) const;
 
     void MoveForwardLadder(float Value);
 
@@ -71,11 +83,36 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Swim Movement")
         class UNiagaraSystem* WaterSplashEffect;
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Swim Movement")
+    float DiveSpeed;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Swim Movement")
+    float DiveBottomHitTolerance;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Swim Movement")
+    float DiveTopHitTolerance;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Swim Movement")
+    float CurrBreath;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Swim Movement")
+    float MaxBreath;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Swim Movement")
+    float UnderwaterTimeCount;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Swim Movement")
+    float DangerZoneBreathPercentage;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Swim Movement")
+    FLinearColor BreathCircleColor;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Swim Movement")
+    FLinearColor BreathCircleColorDanger;
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
-
-    class AProject_HybriaCharacter *Character;
 
 public:
 
@@ -83,9 +120,9 @@ public:
 	ECharacterMovement CurrMovement = ECharacterMovement::Walk;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MyActor")
-        bool bLockMoviment = false;
+        bool bLockMovement = false;
 
-    void ChangeState(bool bLockMoviment, ECharacterMovement Movement);
+    void ChangeState(bool bLockMovement, ECharacterMovement Movement);
 
     UFUNCTION(BlueprintCallable)
     void Jump();
@@ -119,4 +156,18 @@ public:
 
     UFUNCTION(BlueprintCallable)
     void EdgeClimbingFreeMovement();
+
+    UFUNCTION(BlueprintCallable)
+    void StartDiving();
+
+    UFUNCTION(BlueprintCallable)
+    void StopDiving();
+
+    UFUNCTION(BlueprintCallable)
+    int GetDivingDirection() const;
+
+    UFUNCTION(BlueprintCallable)
+    float GetCurrBreath() const;
+    
+    void GoToSurface();
 };

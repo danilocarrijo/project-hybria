@@ -75,7 +75,7 @@ bool UCharacterMovementExtensionsClimb::Tick(AProject_HybriaCharacter *Character
         ActorComponent = Character;
 
         MovementComponent->StopMovementImmediately();
-        Character->SetCanMoveAndState(true, ECharacterMovement::Clibing);
+        Character->SetCanMoveAndState(true, ECharacterMovement::Climbing);
         MovementComponent->SetMovementMode(EMovementMode::MOVE_Flying);
 
         Start = Character->GetActorLocation();

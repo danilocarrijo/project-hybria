@@ -4,13 +4,15 @@
 #include "CharacterMovementExtensionsEdgeJump.generated.h"
 
 UCLASS()
-class UCharacterMovementExtensionsEdgeJump : public UObject
+class PROJECT_HYBRIA_API UCharacterMovementExtensionsEdgeJump : public UObject
 {
     GENERATED_BODY()
 private:
 
 public:
-    void Tick(class AProject_HybriaCharacter *Character);
+    UCharacterMovementExtensionsEdgeJump();
+    
+    static void Tick(class AProject_HybriaCharacter *Character);
 
 protected:
 
