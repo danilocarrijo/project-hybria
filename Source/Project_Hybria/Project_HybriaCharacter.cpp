@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Project_HybriaCharacter.h"
+
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -10,9 +11,14 @@
 #include "Engine/World.h"
 #include "GameFramework/Character.h"
 #include "CharacterMovementExtensions/CharacterMovementExtensions.h"
+#include "Engine/GameEngine.h"
 #include "Engine/GameViewportClient.h"
 #include "UI/PlayerMain.h"
 #include "HealthSystem/HealthSystem.h"
+#include "Inventory/Inventory.h"
+#include "Inventory/Potion.h"
+#include "Kismet/GameplayStatics.h"
+#include "UI/PauseMenu.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AProject_HybriaCharacter
@@ -23,7 +29,6 @@ void AProject_HybriaCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	UUserWidget *UserWidget = CreateWidget<UUserWidget>(GetWorld(), PlayerWidget);
-        
 
 	if (IsValid(UserWidget))
 	{
@@ -35,6 +40,7 @@ void AProject_HybriaCharacter::BeginPlay()
 		{
 			PlayerMainInstance = PlayerMain;
 			PlayerMainInstance->Character = this;
+			PlayerMainInstance->OnInit();
 			HealthSystem->InitUI(PlayerMainInstance);
 		}
 	}
@@ -98,11 +104,22 @@ void AProject_HybriaCharacter::PlayMontage(class UAnimMontage* Montage, float Ra
 
 //////////////////////////////////////////////////////////////////////////
 // Input
-
 void AProject_HybriaCharacter::SetupPlayerInputComponent(class UInputComponent *PlayerInputComponent)
 {
 	// Set up gameplay key bindings
 	check(PlayerInputComponent);
+	
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	PlayerInputComponent->BindAction("Pause", IE_Pressed, this, &AProject_HybriaCharacter::SetGamePaused).bExecuteWhenPaused = true;
+
+	PlayerInputComponent->BindAction(TEXT("MenuUp"), IE_Pressed, this, &AProject_HybriaCharacter::MenuUp).bExecuteWhenPaused = true;
+	PlayerInputComponent->BindAction(TEXT("MenuDown"), IE_Pressed, this, &AProject_HybriaCharacter::MenuDown).bExecuteWhenPaused = true;
+	PlayerInputComponent->BindAction(TEXT("MenuRigth"), IE_Pressed, this, &AProject_HybriaCharacter::MenuRight).bExecuteWhenPaused = true;
+	PlayerInputComponent->BindAction(TEXT("MenuLeft"), IE_Pressed, this, &AProject_HybriaCharacter::MenuLeft).bExecuteWhenPaused = true;
+
+	PlayerInputComponent->BindAxis(TEXT("MoveForward"), this, &AProject_HybriaCharacter::MoveForward);
+	PlayerInputComponent->BindAxis(TEXT("MoveRight"), this, &AProject_HybriaCharacter::MoveRight);
 
 	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
 	// "turn" handles devices that provide an absolute delta, such as a mouse.
@@ -115,6 +132,22 @@ void AProject_HybriaCharacter::SetupPlayerInputComponent(class UInputComponent *
 	// handle touch devices
 	PlayerInputComponent->BindTouch(IE_Pressed, this, &AProject_HybriaCharacter::TouchStarted);
 	PlayerInputComponent->BindTouch(IE_Released, this, &AProject_HybriaCharacter::TouchStopped);
+}
+
+void AProject_HybriaCharacter::MoveForward(float AxisValue)
+{
+	if (IsValid(CharacterMovementExtensionsHandler) && !bIsGamePaused)
+	{
+		CharacterMovementExtensionsHandler->MoveForward(AxisValue);
+	}
+}
+
+void AProject_HybriaCharacter::MoveRight(float AxisValue)
+{
+	if (IsValid(CharacterMovementExtensionsHandler) && !bIsGamePaused)
+	{
+		CharacterMovementExtensionsHandler->MoveRight(AxisValue);
+	}
 }
 
 void AProject_HybriaCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
@@ -172,4 +205,64 @@ void AProject_HybriaCharacter::GoToSurface() const
 	if (!IsValid(CharacterMovementExtensionsHandler)) return;
 
 	CharacterMovementExtensionsHandler->GoToSurface();
+}
+
+void AProject_HybriaCharacter::SetGamePaused()
+{
+	bIsGamePaused = !bIsGamePaused;
+	UGameplayStatics::SetGamePaused(GetWorld(), bIsGamePaused);
+
+	/*if (bIsGamePaused)
+	{
+		if (UUserWidget *UserWidget = CreateWidget<UUserWidget>(GetWorld(), PauseMenuWidget); IsValid(UserWidget))
+		{
+			UserWidget->AddToViewport();
+
+			if (UPauseMenu *PlayerMain = Cast<UPauseMenu>(UserWidget); IsValid(PlayerMain))
+			{
+				PauseMenuInstance = PlayerMain;
+				PauseMenuInstance->OnInit();
+			}
+		}
+	} else if (IsValid(PauseMenuInstance))
+	{
+		PauseMenuInstance->RemoveFromViewport();
+		PauseMenuInstance = nullptr;
+	}*/
+}
+
+void AProject_HybriaCharacter::MenuUp()
+{
+	if (bIsGamePaused && PlayerMainInstance)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("funfa")));
+		PlayerMainInstance->OnUpKeyEvent();
+	}
+}
+
+void AProject_HybriaCharacter::MenuDown()
+{
+	if (bIsGamePaused && PlayerMainInstance)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("funfa")));
+		PlayerMainInstance->OnDownKeyEvent();
+	}
+}
+
+void AProject_HybriaCharacter::MenuRight()
+{
+	if (bIsGamePaused && PlayerMainInstance)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("funfa")));
+		PlayerMainInstance->OnRightKeyEvent();
+	}
+}
+
+void AProject_HybriaCharacter::MenuLeft()
+{
+	if (bIsGamePaused && PlayerMainInstance)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("funfa")));
+		PlayerMainInstance->OnLeftKeyEvent();
+	}
 }

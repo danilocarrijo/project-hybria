@@ -15,6 +15,9 @@ class PROJECT_HYBRIA_API UPlayerMain : public UUserWidget
 	GENERATED_BODY()
 	
 public:
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void OnInit();
+	
 	virtual void NativeConstruct() override;
 
     UFUNCTION(BlueprintCallable)
@@ -31,4 +34,16 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	class AProject_HybriaCharacter *Character;
+
+	UFUNCTION(BlueprintNativeEvent)
+	void OnUpKeyEvent();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void OnDownKeyEvent();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void OnRightKeyEvent();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void OnLeftKeyEvent();
 };

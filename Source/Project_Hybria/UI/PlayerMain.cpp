@@ -8,6 +8,10 @@
 #include "Heart.h"
 #include "Algo/Reverse.h"
 
+void UPlayerMain::OnInit_Implementation()
+{
+}
+
 void UPlayerMain::NativeConstruct()
 {
 
@@ -83,4 +87,20 @@ void UPlayerMain::UpdateHearts(float Health)
             Heart->SetValue(0);
         }
     }
+}
+
+void UPlayerMain::OnLeftKeyEvent_Implementation()
+{
+}
+
+void UPlayerMain::OnRightKeyEvent_Implementation()
+{
+}
+
+void UPlayerMain::OnDownKeyEvent_Implementation()
+{
+}
+
+void UPlayerMain::OnUpKeyEvent_Implementation()
+{
 }

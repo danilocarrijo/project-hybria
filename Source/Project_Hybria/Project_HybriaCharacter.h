@@ -53,6 +53,10 @@ protected:
 protected:
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	
+	void MoveForward(float AxisValue);
+	
+	void MoveRight(float AxisValue);
 	// End of APawn interface
 	
 	// Called when the game starts or when spawned
@@ -66,7 +70,7 @@ public:
 
 	void PlayMontage(class UAnimMontage* Montage, float Rate);
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UCharacterMovementExtensions* CharacterMovementExtensionsHandler;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -75,11 +79,24 @@ public:
 	void SetCanMoveAndState(bool bCanMove, ECharacterMovement Movement);
 
     UPROPERTY(EditAnywhere)
-    TSubclassOf<class UUserWidget> PlayerWidget;
+	TSubclassOf<class UUserWidget> PlayerWidget;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool bIsGamePaused = false;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
-    void GoToSurface() const;
+	void GoToSurface() const;
+
+	void SetGamePaused();
+
+	void MenuUp();
+
+	void MenuDown();
+
+	void MenuRight();
+
+	void MenuLeft();
+	
 private:
 
 	UPROPERTY(EditAnywhere)
@@ -87,6 +104,7 @@ private:
 
 	bool bIsGrounded = false;
 
+	UPROPERTY(EditAnywhere)
 	class UPlayerMain* PlayerMainInstance;
 
 };
